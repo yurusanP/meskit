@@ -9,8 +9,6 @@
  * Copyright (c) 2023 Jack Xu <yurusanp@gmail.com>
  */
 
-//parser grammar SemGuS;
-
 grammar SemGuS;
 
 import BaseLexer;
@@ -23,116 +21,156 @@ script
     : command*
     ;
 
+// commands
+
 command
     : ParOpen CMD_Assume term ParClose
+    # assumeCommand
     | ParOpen CMD_CheckSynth ParClose
+    # checkSynthCommand
     | ParOpen CMD_Constraint term ParClose
-    | ParOpen CMD_DeclareDatatype symbol datatype_dec ParClose
+    # constraintCommand
+    | ParOpen CMD_DeclareDatatype symbol datatypeDec ParClose
+    # declareDatatypeCommand
     // TODO: number of occurrences should be n+1
-    | ParOpen CMD_DeclareDatatypes ParOpen sort_dec+ ParClose ParOpen datatype_dec+ ParClose ParClose
+    | ParOpen CMD_DeclareDatatypes ParOpen sortDec+ ParClose ParOpen datatypeDec+ ParClose ParClose
+    # declareDatatypesCommand
     | ParOpen CMD_DeclareSort symbol Numeral ParClose
+    # declareSortCommand
     // TODO: number of occurrences should be n+1
-    | ParOpen CMD_DeclareTermTypes ParOpen sort_dec+ ParClose ParOpen datatype_dec+ ParClose ParClose
+    | ParOpen CMD_DeclareTermTypes ParOpen sortDec+ ParClose ParOpen datatypeDec+ ParClose ParClose
+    # declareTermTypesCommand
     | ParOpen CMD_DeclareVar symbol sort ParClose
-    | ParOpen CMD_DefineFun function_def ParClose
-    | ParOpen CMD_DefineFunRec function_def ParClose
+    # declareVarCommand
+    | ParOpen CMD_DefineFun functionDef ParClose
+    # defineFunCommand
+    | ParOpen CMD_DefineFunRec functionDef ParClose
+    # defineFunRecCommand
     // TODO: number of occurrences should be n+1
-    | ParOpen CMD_DefineFunsRec ParOpen function_dec+ ParClose ParOpen term+ ParClose ParClose
+    | ParOpen CMD_DefineFunsRec ParOpen functionDec+ ParClose ParOpen term+ ParClose ParClose
+    # defineFunsRecCommand
     | ParOpen CMD_DefineSort symbol ParOpen symbol* ParClose sort ParClose
+    # defineSortCommand
     | ParOpen CMD_Push Numeral ParClose
+    # pushCommand
     | ParOpen CMD_Pop Numeral ParClose
+    # popCommand
     | ParOpen CMD_Reset ParClose
+    # resetCommand
     | ParOpen CMD_SetInfo attribute ParClose
+    # setInfoCommand
     | ParOpen CMD_SetLogic symbol ParClose
+    # setLogicCommand
     | ParOpen CMD_SetOption attribute ParClose
-    | ParOpen CMD_SynthFun symbol ParOpen sorted_var* ParClose sort ParClose
+    # setOptionCommand
+    | ParOpen CMD_SynthFun symbol ParOpen sortedVar* ParClose sort ParClose
+    # synthFunCommand
     ;
 
-sort_dec
+sortDec
     : ParOpen symbol Numeral ParClose
     ;
 
-selector_dec
+selectorDec
     : ParOpen symbol sort ParClose
     ;
 
-constructor_dec
-    : ParOpen symbol selector_dec* ParClose
+constructorDec
+    : ParOpen symbol selectorDec* ParClose
     ;
 
-datatype_dec
-    : ParOpen constructor_dec+ ParClose
-    | ParOpen GRW_Par ParOpen symbol+ ParClose datatype_dec+ ParClose
+datatypeDec
+    : ParOpen constructorDec+ ParClose
+    | ParOpen GRW_Par ParOpen symbol+ ParClose datatypeDec+ ParClose
     ;
 
-function_dec
-    : ParOpen symbol ParOpen sorted_var* ParClose sort ParClose
+functionDec
+    : ParOpen symbol ParOpen sortedVar* ParClose sort ParClose
     ;
 
-function_def
-    : symbol ParOpen sorted_var* ParClose sort term
+functionDef
+    : symbol ParOpen sortedVar* ParClose sort term
     ;
 
-// terms and formulas
+// terms
 
-term: spec_constant
-    | qual_identifier
-    | ParOpen qual_identifier term+ ParClose
-    | ParOpen GRW_Let ParOpen var_binding+ ParClose term ParClose
-    | ParOpen GRW_Forall ParOpen sorted_var+ ParClose term ParClose
-    | ParOpen GRW_Exists ParOpen sorted_var+ ParClose term ParClose
-    | ParOpen GRW_Match term ParOpen match_case+ ParClose ParClose
+term: specConstant
+    # literalTerm
+    | qualIdentifier
+    # identifierTerm
+    | ParOpen qualIdentifier term+ ParClose
+    # applicationTerm
+    | ParOpen GRW_Let ParOpen varBinding+ ParClose term ParClose
+    # letTerm
+    | ParOpen GRW_Forall ParOpen sortedVar+ ParClose term ParClose
+    # forallTerm
+    | ParOpen GRW_Exists ParOpen sortedVar+ ParClose term ParClose
+    # existsTerm
+    | ParOpen GRW_Match term ParOpen matchCase+ ParClose ParClose
+    # matchTerm
     | ParOpen GRW_Par ParOpen symbol+ ParClose term ParClose
+    # parTerm
     | ParOpen GRW_Exclamation term attribute+ ParClose
+    # attributeTerm
     ;
 
-
-qual_identifier
+qualIdentifier
     : identifier
     | ParOpen GRW_As identifier sort ParClose
     ;
 
-var_binding
+varBinding
     : ParOpen symbol term ParClose
     ;
 
-sorted_var
+sortedVar
     : ParOpen symbol sort ParClose
     ;
 
 pattern
     : symbol
+    # simplePattern
     | ParOpen symbol symbol+ ParClose
+    # compositePattern
     ;
 
-match_case
+matchCase
     : ParOpen pattern term ParClose
     ;
 
 // sort
 
 sort: identifier
+    # simpleSort
     | ParOpen identifier sort+ ParClose
+    # parameterizedSort
     ;
 
 // attributes
 
 attribute
     : Keyword
-    | Keyword attribute_value
+    # unitAttribute
+    | Keyword attributeValue
+    # valuedAttribute
     ;
 
-attribute_value
-    : spec_constant
+attributeValue
+    : specConstant
+    # literalAttributeValue
     | symbol
-    | ParOpen s_expr* ParClose
+    # simpleAttributeValue
+    | ParOpen sExpr* ParClose
+    # listAttributeValue
     ;
 
 // identifiers
 
 identifier
     : symbol
+    # simpleIdentifier
     | ParOpen GRW_Underscore symbol index+ ParClose
+    # indexedIdentifier
     ;
 
 index
@@ -142,15 +180,15 @@ index
 
 // s-expressions
 
-s_expr
-    : spec_constant
+sExpr
+    : specConstant
     | symbol
     | reserved
     | Keyword
-    | ParOpen s_expr* ParClose
+    | ParOpen sExpr* ParClose
     ;
 
-spec_constant
+specConstant
     : Numeral
     | Decimal
     | Hexadecimal

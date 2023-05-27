@@ -9,7 +9,7 @@ import org.jline.reader.Parser.ParseContext
 import org.yurusanp.meskit.cli.util.tokenize
 import org.yurusanp.meskit.parser.SemGuSLexer
 
-class ReplParser : Parser {
+internal class ReplParser : Parser {
   override fun parse(line: String, cursor: Int, context: ParseContext): ParsedLine {
     if (line.isBlank()) return ReplParsedLine(
       wordCursor = 0,

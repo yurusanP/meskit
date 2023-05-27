@@ -2,8 +2,10 @@ package org.yurusanp.meskit.cli.util
 
 import org.antlr.v4.runtime.*
 import org.yurusanp.meskit.parser.SemGuSLexer
+import org.yurusanp.meskit.parser.SemGuSParser
+import org.yurusanp.meskit.parser.SemGuSVisitor
 
-fun String.tokenize(): List<Token> = let { line ->
+internal fun String.tokenize(): List<Token> = let { line ->
   val charStream: CodePointCharStream = CharStreams.fromString(line)
   val lexer = SemGuSLexer(charStream).apply {
     removeErrorListeners()
@@ -13,17 +15,31 @@ fun String.tokenize(): List<Token> = let { line ->
   tokenStream.tokens.dropLast(1)
 }
 
-object ThrowingErrorListener : BaseErrorListener() {
+internal fun <R> String.interpret(interpreter: SemGuSVisitor<R>): R = let {
+  val charStream: CodePointCharStream = CharStreams.fromString(this)
+  val lexer = SemGuSLexer(charStream).apply {
+    removeErrorListeners()
+    addErrorListener(ThrowingErrorListener)
+  }
+  val tokenStream: CommonTokenStream = CommonTokenStream(lexer)
+  val parser = SemGuSParser(tokenStream).apply {
+    removeErrorListeners()
+    addErrorListener(ThrowingErrorListener)
+  }
+  interpreter.visit(parser.start())
+}
+
+internal object ThrowingErrorListener : BaseErrorListener() {
   override fun syntaxError(
     recognizer: Recognizer<*, *>,
     offendingSymbol: Any?,
     line: Int,
     charPositionInLine: Int,
     msg: String,
-    e: RecognitionException,
+    e: RecognitionException?,
   ) {
     throw SyntaxErrorException("line $line:$charPositionInLine $msg")
   }
 }
 
-class SyntaxErrorException(msg: String) : IllegalStateException(msg)
+internal class SyntaxErrorException(msg: String) : IllegalStateException(msg)
