@@ -5,7 +5,7 @@ plugins {
 dependencies {
   implementation(libs.bundles.jline)
   implementation(libs.clikt)
-  implementation(project(":meskit-parser"))
+  implementation(project(":meskit-base"))
 }
 
 application {

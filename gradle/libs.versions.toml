@@ -22,3 +22,4 @@ jline = [ "jline-builtins", "jline-reader", "jline-terminal", "jline-terminal-ja
 [plugins]
 dokka = { id = "org.jetbrains.dokka", version.ref = "dokka" }
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }

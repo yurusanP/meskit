@@ -1,6 +1,7 @@
-package org.yurusanp.meskit.parser
+package org.yurusanp.meskit.cli.util
 
 import org.antlr.v4.runtime.*
+import org.yurusanp.meskit.parser.SemGuSLexer
 
 fun String.tokenize(): List<Token> = let { line ->
   val charStream: CodePointCharStream = CharStreams.fromString(line)

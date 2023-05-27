@@ -6,8 +6,8 @@ import org.jline.reader.EOFError
 import org.jline.reader.ParsedLine
 import org.jline.reader.Parser
 import org.jline.reader.Parser.ParseContext
+import org.yurusanp.meskit.cli.util.tokenize
 import org.yurusanp.meskit.parser.SemGuSLexer
-import org.yurusanp.meskit.parser.tokenize
 
 class ReplParser : Parser {
   override fun parse(line: String, cursor: Int, context: ParseContext): ParsedLine {
