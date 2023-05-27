@@ -9,8 +9,12 @@ dependencies {
 
 configurations {
   api {
-    // exclude Antlr v3 runtime from the classpath
+    // exclude Antlr v3 runtime from the compile classpath
     exclude(group = "org.antlr", module = "antlr-runtime")
+  }
+  runtimeClasspath {
+    // exclude Antlr v4 generator from the runtime classpath
+    exclude(group = "org.antlr", module = "antlr4")
   }
 }
 

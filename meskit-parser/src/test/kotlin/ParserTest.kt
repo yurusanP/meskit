@@ -8,7 +8,8 @@ import org.antlr.v4.runtime.Token
 class ParserTest : FunSpec(
   {
     test("Playground") {
-      val input = "(check-synth)"
+      // unicode
+      val input = "(define-fun |一个| () Int 1)"
       val charStream = CharStreams.fromString(input)
       val lexer = SemGuSLexer(charStream)
       val tokenStream = CommonTokenStream(lexer)

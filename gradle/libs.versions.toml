@@ -1,13 +1,23 @@
 [versions]
 antlr4 = "4.12.0"
+clikt = "3.5.2"
 dokka = "1.8.10"
+jline = "3.22.0"
 kotlin = "1.8.21"
 kotest = "5.6.1"
 
 [libraries]
 antlr4 = { group = "org.antlr", name = "antlr4", version.ref = "antlr4" }
 antlr4-runtime = { group = "org.antlr", name = "antlr4-runtime", version.ref = "antlr4" }
+clikt = { group = "com.github.ajalt.clikt", name = "clikt", version.ref = "clikt" }
+jline-builtins = { group = "org.jline", name = "jline-builtins", version.ref = "jline" }
+jline-reader = { group = "org.jline", name = "jline-reader", version.ref = "jline" }
+jline-terminal = { group = "org.jline", name = "jline-terminal", version.ref = "jline" }
+jline-terminal-jansi = { group = "org.jline", name = "jline-terminal-jansi", version.ref = "jline" }
 kotest-runner-junit5 = { group = "io.kotest", name = "kotest-runner-junit5", version.ref = "kotest" }
+
+[bundles]
+jline = [ "jline-builtins", "jline-reader", "jline-terminal", "jline-terminal-jansi" ]
 
 [plugins]
 dokka = { id = "org.jetbrains.dokka", version.ref = "dokka" }
