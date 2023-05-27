@@ -8,8 +8,8 @@ import org.yurusanp.meskit.parser.SemGuSLexer
 val literalNames: List<String> = (
   SemGuSLexer::class.java.getDeclaredField("_LITERAL_NAMES")
     .apply { isAccessible = true }
-    .get(null) as Array<String?>
-  ).toList().filterNotNull().map { it.removeSurrounding("'", "'") }
+    .get(null) as Array<*>
+  ).toList().mapNotNull { (it as String).removeSurrounding("'", "'") }
 
 val reservedCandidates: List<Candidate> = literalNames.map(::Candidate)
 
