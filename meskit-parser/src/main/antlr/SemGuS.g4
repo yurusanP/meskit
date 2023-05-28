@@ -129,9 +129,7 @@ sortedVar
 
 pattern
     : symbol
-    # simplePattern
     | ParOpen symbol symbol+ ParClose
-    # compositePattern
     ;
 
 matchCase
@@ -159,7 +157,7 @@ attributeValue
     : specConstant
     # literalAttributeValue
     | symbol
-    # simpleAttributeValue
+    # symbolAttributeValue
     | ParOpen sExpr* ParClose
     # listAttributeValue
     ;
@@ -168,7 +166,7 @@ attributeValue
 
 identifier
     : symbol
-    # simpleIdentifier
+    # symbolIdentifier
     | ParOpen GRW_Underscore symbol index+ ParClose
     # indexedIdentifier
     ;

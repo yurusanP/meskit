@@ -4,9 +4,7 @@ import org.yurusanp.meskit.parser.SemGuSBaseVisitor
 import org.yurusanp.meskit.parser.SemGuSParser.*
 
 open class BaseInterpreter : SemGuSBaseVisitor<Unit>() {
-  private val interpCtx: InterpreterContext = InterpreterContext()
-
-  open class InterpreterContext {}
+  open inner class BaseInterpreterContext {}
 
   override fun visitAssumeCommand(ctx: AssumeCommandContext) {
     TODO("Not yet implemented")

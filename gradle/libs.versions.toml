@@ -1,10 +1,12 @@
 [versions]
+kotlin = "1.8.21"
 antlr4 = "4.12.0"
 clikt = "3.5.2"
 dokka = "1.8.10"
 jline = "3.22.0"
-kotlin = "1.8.21"
 kotest = "5.6.1"
+kotlinx-collections-immutable = "0.3.5"
+kotlinx-serialization = "1.5.1"
 
 [libraries]
 antlr4 = { group = "org.antlr", name = "antlr4", version.ref = "antlr4" }
@@ -15,6 +17,8 @@ jline-reader = { group = "org.jline", name = "jline-reader", version.ref = "jlin
 jline-terminal = { group = "org.jline", name = "jline-terminal", version.ref = "jline" }
 jline-terminal-jansi = { group = "org.jline", name = "jline-terminal-jansi", version.ref = "jline" }
 kotest-runner-junit5 = { group = "io.kotest", name = "kotest-runner-junit5", version.ref = "kotest" }
+kotlinx-collections-immutable = { group = "org.jetbrains.kotlinx", name = "kotlinx-collections-immutable", version.ref = "kotlinx-collections-immutable" }
+kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
 
 [bundles]
 jline = [ "jline-builtins", "jline-reader", "jline-terminal", "jline-terminal-jansi" ]
