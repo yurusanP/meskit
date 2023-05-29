@@ -36,7 +36,7 @@ internal class Repl(private val interpreter: SemGuSVisitor<Unit> = BaseInterpret
     .completer(completer)
     .variable(LineReader.HISTORY_FILE, historyFilePath)
     .variable(LineReader.SECONDARY_PROMPT_PATTERN, "... ")
-    .option(LineReader.Option.INSERT_TAB, true)
+//    .option(LineReader.Option.INSERT_TAB, true)
     .build()
 
   fun start() {

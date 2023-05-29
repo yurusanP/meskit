@@ -26,20 +26,28 @@ internal class ReplParser : Parser {
       }
     }
 
+    val wordTokens: List<Token> = tokens.filter {
+      it.type != SemGuSLexer.ParOpen && it.type != SemGuSLexer.ParClose
+    }
+
     // Example of a token with startIndex = 0 and stopIndex = 2
     // index    0 1 2
     // input   |m|e|s|
     // cursor  0 1 2 3
-    val ix = tokens.lowerBound { token ->
+    val ix: Int = wordTokens.lowerBound { token ->
       // the convention in DefaultParser is selecting the next word if the cursor is not pointing at a word
       cursor in token.startIndex..token.stopIndex + 1
         || token.startIndex > cursor
     }
 
+    val wordCursor =
+      if (ix == wordTokens.size || wordTokens[ix].startIndex > cursor) 0
+      else cursor - wordTokens[ix].startIndex
+
     return ReplParsedLine(
-      wordCursor = if (ix == tokens.size || tokens[ix].startIndex > cursor) 0 else cursor - tokens[ix].startIndex,
+      wordCursor,
       wordIndex = ix,
-      words = tokens.map(Token::text),
+      words = wordTokens.map(Token::text),
       line = line,
       cursor = cursor,
     )

@@ -8,8 +8,8 @@ import org.yurusanp.meskit.parser.SemGuSVisitor
 internal fun String.tokenize(): List<Token> = let { line ->
   val charStream: CodePointCharStream = CharStreams.fromString(line)
   val lexer = SemGuSLexer(charStream).apply {
+    // doing completion shouldn't throw exceptions
     removeErrorListeners()
-    addErrorListener(ThrowingErrorListener)
   }
   val tokenStream: CommonTokenStream = CommonTokenStream(lexer).apply { fill() }
   tokenStream.tokens.dropLast(1)
@@ -21,7 +21,7 @@ internal fun <R> String.interpret(interpreter: SemGuSVisitor<R>): R = let {
     removeErrorListeners()
     addErrorListener(ThrowingErrorListener)
   }
-  val tokenStream: CommonTokenStream = CommonTokenStream(lexer)
+  val tokenStream = CommonTokenStream(lexer)
   val parser = SemGuSParser(tokenStream).apply {
     removeErrorListeners()
     addErrorListener(ThrowingErrorListener)
