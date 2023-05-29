@@ -32,12 +32,12 @@ command
     # constraintCommand
     | ParOpen CMD_DeclareDatatype symbol datatypeDec ParClose
     # declareDatatypeCommand
-    // TODO: number of occurrences should be n+1
+    // NOTE: number of occurrences should be n+1
     | ParOpen CMD_DeclareDatatypes ParOpen sortDec+ ParClose ParOpen datatypeDec+ ParClose ParClose
     # declareDatatypesCommand
     | ParOpen CMD_DeclareSort symbol Numeral ParClose
     # declareSortCommand
-    // TODO: number of occurrences should be n+1
+    // NOTE: number of occurrences should be n+1
     | ParOpen CMD_DeclareTermTypes ParOpen sortDec+ ParClose ParOpen datatypeDec+ ParClose ParClose
     # declareTermTypesCommand
     | ParOpen CMD_DeclareVar symbol sort ParClose
@@ -46,7 +46,7 @@ command
     # defineFunCommand
     | ParOpen CMD_DefineFunRec functionDef ParClose
     # defineFunRecCommand
-    // TODO: number of occurrences should be n+1
+    // NOTE: number of occurrences should be n+1
     | ParOpen CMD_DefineFunsRec ParOpen functionDec+ ParClose ParOpen term+ ParClose ParClose
     # defineFunsRecCommand
     | ParOpen CMD_DefineSort symbol ParOpen symbol* ParClose sort ParClose
@@ -81,7 +81,9 @@ constructorDec
 
 datatypeDec
     : ParOpen constructorDec+ ParClose
+    # simpleDatatypeDec
     | ParOpen GRW_Par ParOpen symbol+ ParClose datatypeDec+ ParClose
+    # parDatatypeDec
     ;
 
 functionDec
@@ -97,9 +99,9 @@ functionDef
 term: specConstant
     # literalTerm
     | qualIdentifier
-    # identifierTerm
+    # refTerm
     | ParOpen qualIdentifier term+ ParClose
-    # applicationTerm
+    # appTerm
     | ParOpen GRW_Let ParOpen varBinding+ ParClose term ParClose
     # letTerm
     | ParOpen GRW_Forall ParOpen sortedVar+ ParClose term ParClose
@@ -108,15 +110,18 @@ term: specConstant
     # existsTerm
     | ParOpen GRW_Match term ParOpen matchCase+ ParClose ParClose
     # matchTerm
-    | ParOpen GRW_Par ParOpen symbol+ ParClose term ParClose
-    # parTerm
+    // NOTE: not needed for now, used in theory declarations
+    // | ParOpen GRW_Par ParOpen symbol+ ParClose term ParClose
+    // # parTerm
     | ParOpen GRW_Exclamation term attribute+ ParClose
-    # attributeTerm
+    # attrTerm
     ;
 
 qualIdentifier
     : identifier
+    # simpleQual
     | ParOpen GRW_As identifier sort ParClose
+    # asQual
     ;
 
 varBinding
@@ -129,7 +134,9 @@ sortedVar
 
 pattern
     : symbol
+    # symbolPattern
     | ParOpen symbol symbol+ ParClose
+    # appPattern
     ;
 
 matchCase
@@ -141,25 +148,34 @@ matchCase
 sort: identifier
     # simpleSort
     | ParOpen identifier sort+ ParClose
-    # parameterizedSort
+    # parSort
     ;
 
 // attributes
 
 attribute
     : Keyword
-    # unitAttribute
+    # unitAttr
     | Keyword attributeValue
-    # valuedAttribute
+    # valuedAttr
     ;
 
 attributeValue
     : specConstant
-    # literalAttributeValue
+    # literalAttrVal
     | symbol
-    # symbolAttributeValue
-    | ParOpen sExpr* ParClose
-    # listAttributeValue
+    # symbolAttrVal
+    | ParOpen sexpr* ParClose
+    # sexprAttrVal
+    ;
+
+sexpr
+    : attributeValue
+    # attrValSexpr
+    | reserved
+    # reservedSexpr
+    | Keyword
+    # keywordSexpr
     ;
 
 // identifiers
@@ -173,18 +189,12 @@ identifier
 
 index
     : Numeral
+    # numIndex
     | symbol
+    # symbolIndex
     ;
 
-// s-expressions
-
-sExpr
-    : specConstant
-    | symbol
-    | reserved
-    | Keyword
-    | ParOpen sExpr* ParClose
-    ;
+// lexemes
 
 specConstant
     : Numeral
@@ -233,4 +243,5 @@ reserved
     | CMD_SetInfo
     | CMD_SetLogic
     | CMD_SetOption
+    | CMD_SynthFun
     ;

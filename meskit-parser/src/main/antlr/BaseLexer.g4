@@ -36,9 +36,9 @@ fragment PrintableCharNoDquote
     ;
 
 fragment PrintableCharNoStick
-    : '\u0020' .. '\u005B'
-    | '\u005D' .. '\u007B'
-    | '\u007D' .. '\u007E'
+    : '\u0020'..'\u005B'
+    | '\u005D'..'\u007B'
+    | '\u007D'..'\u007E'
     | PrintableCharNoAscii
     ;
 

@@ -2,3 +2,6 @@
 .idea
 build
 .DS_Store
+
+# get rid of antlr generated files
+meskit-parser/**/gen
