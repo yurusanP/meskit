@@ -12,7 +12,7 @@ private val literalNames: List<String> = (
   SemGuSLexer::class.java.getDeclaredField("_LITERAL_NAMES")
     .apply { isAccessible = true }
     .get(null) as Array<*>
-  ).toList().mapNotNull { (it as String).removeSurrounding("'", "'") }
+  ).toList().filterNotNull().map { (it as String).removeSurrounding("'", "'") }
 
 private val reservedCandidates: List<Candidate> = literalNames.map(::Candidate)
 
