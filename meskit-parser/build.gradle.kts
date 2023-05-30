@@ -28,5 +28,10 @@ tasks.generateGrammarSource.configure {
 tasks.generateGrammarSource {
   doLast {
     delete(projectDir.resolve("src/main/gen"))
+    fileTree(projectDir.resolve("src/main/antlr")).visit {
+      if (!this.name.endsWith("g4")) {
+        delete(this.file)
+      }
+    }
   }
 }

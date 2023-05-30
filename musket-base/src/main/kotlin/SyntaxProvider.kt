@@ -2,6 +2,7 @@ package org.yurusanp.musket
 
 import org.yurusanp.meskit.parser.SemGuSBaseVisitor
 import org.yurusanp.meskit.parser.SemGuSParser.*
+import org.yurusanp.meskit.util.sym
 
 open class SyntaxProvider : SemGuSBaseVisitor<Unit>() {
   override fun visitAssumeCommand(ctx: AssumeCommandContext) {
@@ -29,7 +30,18 @@ open class SyntaxProvider : SemGuSBaseVisitor<Unit>() {
   }
 
   override fun visitDeclareTermTypesCommand(ctx: DeclareTermTypesCommandContext) {
-    TODO("Not yet implemented")
+    val childCtxs: List<Pair<SortDecContext, TermTypeDecContext>> = ctx
+      .sortDec().asSequence()
+      .zip(ctx.termTypeDec().asSequence())
+      .toList()
+
+    for ((sortDecCtx, termTypeDecCtx) in childCtxs) {
+      val sortSym: String = sortDecCtx.symbol().sym()
+      val termDec: List<TermDecContext> = termTypeDecCtx.termDec().toList()
+
+    }
+////    val meow = sortDec.symbol()
+////    println("meow")
   }
 
   override fun visitDeclareVarCommand(ctx: DeclareVarCommandContext) {

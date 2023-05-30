@@ -29,10 +29,9 @@ private val symbolNames: Array<*> =
     .get(null) as Array<*>
 
 private val vocabulary: List<Pair<String, String>> = literalNames
-  .asSequence()
-  .filterNotNull()
-  .map { (it as String).removeSurrounding("'", "'") }
-  .zip(symbolNames.asSequence().filterNotNull().map { it as String })
+  .asSequence().zip(symbolNames.asSequence())
+  .filter { it.first != null && it.second != null }
+  .map { (it.first as String).removeSurrounding("'", "'") to (it.second as String) }
   .toList()
 
 private val cmdCandidates: List<Candidate> = vocabulary

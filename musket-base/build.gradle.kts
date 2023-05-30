@@ -3,7 +3,7 @@ plugins {
 }
 
 dependencies {
-  api(project(":meskit-parser"))
+  api(project(":meskit-base"))
   implementation(libs.kotlinx.collections.immutable)
   implementation(libs.kotlinx.serialization.json)
 }

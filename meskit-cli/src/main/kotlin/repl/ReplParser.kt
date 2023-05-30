@@ -27,7 +27,7 @@ internal class ReplParser : Parser {
     }
 
     val wordTokens: List<Token> = tokens.filter {
-      it.type != SemGuSLexer.ParOpen && it.type != SemGuSLexer.ParClose
+      it.text != "(" && it.text != ")"
     }
 
     // Example of a token with startIndex = 0 and stopIndex = 2
@@ -86,9 +86,9 @@ private fun <T> List<T>.lowerBound(fromIndex: Int = 0, toIndex: Int = size, pred
 private fun List<Token>.matchBrackets(): Boolean {
   var parOpenCnt = 0
   for (token in this) {
-    when (token.type) {
-      SemGuSLexer.ParOpen -> ++parOpenCnt
-      SemGuSLexer.ParClose -> {
+    when (token.text) {
+      "(" -> ++parOpenCnt
+      ")" -> {
         if (parOpenCnt == 0) return false
         --parOpenCnt
       }

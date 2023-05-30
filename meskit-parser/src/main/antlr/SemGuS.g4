@@ -24,82 +24,82 @@ script
 // commands
 
 command
-    : ParOpen CMD_Assume term ParClose
+    : '(' CMD_Assume term ')'
     # assumeCommand
-    | ParOpen CMD_CheckSynth ParClose
+    | '(' CMD_CheckSynth ')'
     # checkSynthCommand
-    | ParOpen CMD_Constraint term ParClose
+    | '(' CMD_Constraint term ')'
     # constraintCommand
-    | ParOpen CMD_DeclareDatatype symbol datatypeDec ParClose
+    | '(' CMD_DeclareDatatype symbol datatypeDec ')'
     # declareDatatypeCommand
     // NOTE: number of occurrences should be n+1
-    | ParOpen CMD_DeclareDatatypes ParOpen sortDec+ ParClose ParOpen datatypeDec+ ParClose ParClose
+    | '(' CMD_DeclareDatatypes '(' sortDec+ ')' '(' datatypeDec+ ')' ')'
     # declareDatatypesCommand
-    | ParOpen CMD_DeclareSort symbol Numeral ParClose
+    | '(' CMD_DeclareSort symbol Numeral ')'
     # declareSortCommand
     // NOTE: number of occurrences should be n+1
-    | ParOpen CMD_DeclareTermTypes ParOpen sortDec+ ParClose ParOpen termTypeDec+ ParClose ParClose
+    | '(' CMD_DeclareTermTypes '(' sortDec+ ')' '(' termTypeDec+ ')' ')'
     # declareTermTypesCommand
-    | ParOpen CMD_DeclareVar symbol sort ParClose
+    | '(' CMD_DeclareVar symbol sort ')'
     # declareVarCommand
-    | ParOpen CMD_DefineFun functionDef ParClose
+    | '(' CMD_DefineFun functionDef ')'
     # defineFunCommand
-    | ParOpen CMD_DefineFunRec functionDef ParClose
+    | '(' CMD_DefineFunRec functionDef ')'
     # defineFunRecCommand
     // NOTE: number of occurrences should be n+1
-    | ParOpen CMD_DefineFunsRec ParOpen functionDec+ ParClose ParOpen term+ ParClose ParClose
+    | '(' CMD_DefineFunsRec '(' functionDec+ ')' '(' term+ ')' ')'
     # defineFunsRecCommand
-    | ParOpen CMD_DefineSort symbol ParOpen symbol* ParClose sort ParClose
+    | '(' CMD_DefineSort symbol '(' symbol* ')' sort ')'
     # defineSortCommand
-    | ParOpen CMD_Push Numeral ParClose
+    | '(' CMD_Push Numeral ')'
     # pushCommand
-    | ParOpen CMD_Pop Numeral ParClose
+    | '(' CMD_Pop Numeral ')'
     # popCommand
-    | ParOpen CMD_Reset ParClose
+    | '(' CMD_Reset ')'
     # resetCommand
-    | ParOpen CMD_SetInfo attribute ParClose
+    | '(' CMD_SetInfo attribute ')'
     # setInfoCommand
-    | ParOpen CMD_SetLogic symbol ParClose
+    | '(' CMD_SetLogic symbol ')'
     # setLogicCommand
-    | ParOpen CMD_SetOption attribute ParClose
+    | '(' CMD_SetOption attribute ')'
     # setOptionCommand
-    | ParOpen CMD_SynthFun symbol ParOpen sortedVar* ParClose sort ParClose
+    | '(' CMD_SynthFun symbol '(' sortedVar* ')' sort ')'
     # synthFunCommand
     ;
 
 sortDec
-    : ParOpen symbol Numeral ParClose
+    : '(' symbol Numeral ')'
     ;
 
 selectorDec
-    : ParOpen symbol sort ParClose
+    : '(' symbol sort ')'
     ;
 
 constructorDec
-    : ParOpen symbol selectorDec* ParClose
+    : '(' symbol selectorDec* ')'
     ;
 
 datatypeDec
-    : ParOpen constructorDec+ ParClose
+    : '(' constructorDec+ ')'
     # simpleDatatypeDec
-    | ParOpen GRW_Par ParOpen symbol+ ParClose datatypeDec+ ParClose
+    | '(' GRW_Par '(' symbol+ ')' datatypeDec+ ')'
     # parDatatypeDec
     ;
 
 termDec
-    : ParOpen symbol symbol* ParClose
+    : '(' symbol symbol* ')'
     ;
 
 termTypeDec
-    : ParOpen termDec+ ParClose
+    : '(' termDec+ ')'
     ;
 
 functionDec
-    : ParOpen symbol ParOpen sortedVar* ParClose sort ParClose
+    : '(' symbol '(' sortedVar* ')' sort ')'
     ;
 
 functionDef
-    : symbol ParOpen sortedVar* ParClose sort term
+    : symbol '(' sortedVar* ')' sort term
     ;
 
 // terms
@@ -108,54 +108,54 @@ term: specConstant
     # literalTerm
     | qualIdentifier
     # refTerm
-    | ParOpen qualIdentifier term+ ParClose
+    | '(' qualIdentifier term+ ')'
     # appTerm
-    | ParOpen GRW_Let ParOpen varBinding+ ParClose term ParClose
+    | '(' GRW_Let '(' varBinding+ ')' term ')'
     # letTerm
-    | ParOpen GRW_Forall ParOpen sortedVar+ ParClose term ParClose
+    | '(' GRW_Forall '(' sortedVar+ ')' term ')'
     # forallTerm
-    | ParOpen GRW_Exists ParOpen sortedVar+ ParClose term ParClose
+    | '(' GRW_Exists '(' sortedVar+ ')' term ')'
     # existsTerm
-    | ParOpen GRW_Match term ParOpen matchCase+ ParClose ParClose
+    | '(' GRW_Match term '(' matchCase+ ')' ')'
     # matchTerm
     // NOTE: not needed for now, used in theory declarations
-    // | ParOpen GRW_Par ParOpen symbol+ ParClose term ParClose
+    // | '(' GRW_Par '(' symbol+ ')' term ')'
     // # parTerm
-    | ParOpen GRW_Exclamation term attribute+ ParClose
+    | '(' GRW_Exclamation term attribute+ ')'
     # attrTerm
     ;
 
 qualIdentifier
     : identifier
     # simpleQual
-    | ParOpen GRW_As identifier sort ParClose
+    | '(' GRW_As identifier sort ')'
     # asQual
     ;
 
 varBinding
-    : ParOpen symbol term ParClose
+    : '(' symbol term ')'
     ;
 
 sortedVar
-    : ParOpen symbol sort ParClose
+    : '(' symbol sort ')'
     ;
 
 pattern
     : symbol
     # symbolPattern
-    | ParOpen symbol symbol+ ParClose
+    | '(' symbol symbol+ ')'
     # appPattern
     ;
 
 matchCase
-    : ParOpen pattern term ParClose
+    : '(' pattern term ')'
     ;
 
 // sort
 
 sort: identifier
     # simpleSort
-    | ParOpen identifier sort+ ParClose
+    | '(' identifier sort+ ')'
     # parSort
     ;
 
@@ -173,7 +173,7 @@ attributeValue
     # literalAttrVal
     | symbol
     # symbolAttrVal
-    | ParOpen sexpr* ParClose
+    | '(' sexpr* ')'
     # sexprAttrVal
     ;
 
@@ -191,7 +191,7 @@ sexpr
 identifier
     : symbol
     # symbolIdentifier
-    | ParOpen GRW_Underscore symbol index+ ParClose
+    | '(' GRW_Underscore symbol index+ ')'
     # indexedIdentifier
     ;
 

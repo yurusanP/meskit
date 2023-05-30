@@ -98,14 +98,6 @@ CMD_SynthFun : 'synth-fun' ;
 
 // other tokens
 
-ParOpen
-    : '('
-    ;
-
-ParClose
-    : ')'
-    ;
-
 Numeral
     : '0'
     | [1-9] Digit*
