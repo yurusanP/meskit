@@ -38,7 +38,7 @@ command
     | ParOpen CMD_DeclareSort symbol Numeral ParClose
     # declareSortCommand
     // NOTE: number of occurrences should be n+1
-    | ParOpen CMD_DeclareTermTypes ParOpen sortDec+ ParClose ParOpen datatypeDec+ ParClose ParClose
+    | ParOpen CMD_DeclareTermTypes ParOpen sortDec+ ParClose ParOpen termTypeDec+ ParClose ParClose
     # declareTermTypesCommand
     | ParOpen CMD_DeclareVar symbol sort ParClose
     # declareVarCommand
@@ -84,6 +84,14 @@ datatypeDec
     # simpleDatatypeDec
     | ParOpen GRW_Par ParOpen symbol+ ParClose datatypeDec+ ParClose
     # parDatatypeDec
+    ;
+
+termDec
+    : ParOpen symbol symbol* ParClose
+    ;
+
+termTypeDec
+    : ParOpen termDec+ ParClose
     ;
 
 functionDec

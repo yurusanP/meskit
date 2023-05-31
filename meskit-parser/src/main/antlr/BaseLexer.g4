@@ -11,6 +11,10 @@
 
 lexer grammar BaseLexer;
 
+Comment
+    : ';' ~[\r\n]* -> skip
+    ;
+
 // auxiliary lexical categories
 
 fragment WhiteSpaceChar
