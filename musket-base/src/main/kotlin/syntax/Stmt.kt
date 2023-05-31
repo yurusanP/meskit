@@ -62,7 +62,7 @@ sealed interface Stmt : Node {
   /**
    * Algebraic data type definition.
    */
-  data class ADTypeDef(val adType: ADType) : Stmt {
-    override fun dump(): String = adType.dump()
+  data class ADTypeDef(val adt: ADType) : Stmt {
+    override fun dump(): String = adt.dump()
   }
 }

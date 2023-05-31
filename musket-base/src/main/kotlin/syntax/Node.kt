@@ -41,10 +41,10 @@ sealed interface Node {
   /**
    * Algebraic data type node.
    */
-  data class ADType(val sym: String, val ctors: List<Ctor>, val subtypes: List<ADType>) : Node {
+  data class ADType(val sym: String, val ctors: List<Ctor>?, val subtypes: List<ADType>?) : Node {
     override fun dump(): String = let {
-      val ctorsDump = ctors.joinToString(" ", transform = Ctor::dump)
-      val subtypesDump = subtypes.joinToString(" ", transform = ADType::dump)
+      val ctorsDump = ctors?.joinToString(" ", transform = Ctor::dump) ?: ""
+      val subtypesDump = subtypes?.joinToString(" ", transform = ADType::dump) ?: ""
       val combined = listOf(ctorsDump, subtypesDump).joinToString(" ")
       "adt $sym { $combined }"
     }

@@ -5,3 +5,6 @@ build
 
 # get rid of antlr generated files
 meskit-parser/**/gen
+
+# my own playground
+meskit-bench/**/dust-*
