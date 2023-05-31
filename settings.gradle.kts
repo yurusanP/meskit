@@ -4,5 +4,6 @@ include(
   "meskit-base",
   "meskit-bench",
   "meskit-cli",
-  "meskit-parser"
+  "meskit-parser",
+  "musket-base",
 )
