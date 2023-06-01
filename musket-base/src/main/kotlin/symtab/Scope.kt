@@ -16,11 +16,12 @@ class Scope(val parent: Scope?, private val symMan: SymMan) {
     ?: error("Cannot find symbol $sym.")
 
   /**
-   * Inserts a symbol into the scope.
+   * Inserts a symbol into the scope,
+   * optionally providing a list for its fields inner representations if it is a constructor (i.e., struct) symbol.
    */
-  fun insert(sym: String, isCtor: Boolean = false): SymTabEntry = let {
+  fun insert(sym: String, fieldInners: List<String>? = null): SymTabEntry = let {
     val freshSym = symMan.gensym()
-    val entry = SymTabEntry(freshSym, if (isCtor) SymTab() else null)
+    val entry = SymTabEntry(freshSym, fieldInners)
     symTab.insert(sym, entry)
     entry
   }
