@@ -1,8 +1,7 @@
 package org.yurusanp.musket
 
 import org.yurusanp.meskit.parser.SemGuSBaseVisitor
-import org.yurusanp.meskit.parser.SemGuSParser.DeclareTermTypesCommandContext
-import org.yurusanp.meskit.parser.SemGuSParser.SymbolContext
+import org.yurusanp.meskit.parser.SemGuSParser.*
 import org.yurusanp.meskit.util.normalize
 import org.yurusanp.musket.symtab.SymMan
 import org.yurusanp.musket.syntax.Ann
@@ -40,6 +39,20 @@ class SyntaxProvider : SemGuSBaseVisitor<Unit>() {
 
   private fun popState() {
     states.removeFirst()
+  }
+
+  // visit methods
+
+  override fun visitPushCommand(ctx: PushCommandContext) {
+    repeat(ctx.Numeral().symbol.text.toInt()) {
+      pushState()
+    }
+  }
+
+  override fun visitPopCommand(ctx: PopCommandContext) {
+    repeat(ctx.Numeral().symbol.text.toInt()) {
+      popState()
+    }
   }
 
   override fun visitDeclareTermTypesCommand(ctx: DeclareTermTypesCommandContext) {
