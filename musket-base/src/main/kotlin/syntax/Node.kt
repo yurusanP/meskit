@@ -24,7 +24,7 @@ sealed interface Node {
   /**
    * Annotated symbol node.
    */
-  data class AnnSym(val ann: Ann, val sym: String) : Node {
+  data class AnnedSym(val ann: Ann, val sym: String) : Node {
     override fun dump(): String = "${ann.dump()} $sym"
   }
 

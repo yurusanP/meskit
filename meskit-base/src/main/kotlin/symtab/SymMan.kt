@@ -1,4 +1,4 @@
-package org.yurusanp.musket.symtab
+package org.yurusanp.meskit.symtab
 
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -6,15 +6,23 @@ import java.util.concurrent.atomic.AtomicInteger
  * A symbol manager used by all scopes.
  */
 class SymMan {
+  /**
+   * Current scope.
+   */
   var curScope = Scope(null, this)
+
+  /**
+   * Inverse mappings from inner names to surface symbols.
+   */
+  val inverses: MutableMap<String, String> = mutableMapOf()
 
   // the symbol count shared by all scopes
   private val symCnt = AtomicInteger(0)
 
   /**
-   * Generates a fresh symbol.
+   * Generates a fresh inner name.
    */
-  fun gensym() = "MSK__${symCnt.getAndIncrement()}"
+  fun genInner() = "MES__${symCnt.getAndIncrement()}"
 
   /**
    * Changes to a new scope under the current scope.
@@ -33,11 +41,12 @@ class SymMan {
   // TODO: make more efficient by implementing persistent data structure?
 
   /**
-   * Take a snapshot of the current symbol manager.
+   * Takes a snapshot of the current symbol manager.
    */
   fun snapshot(): SymMan = SymMan().also { newSymMan ->
     val newCurScope = curScope.snapshot(newSymMan)
     newSymMan.curScope = newCurScope
+    newSymMan.inverses.putAll(inverses)
     newSymMan.symCnt.set(symCnt.get())
   }
 }

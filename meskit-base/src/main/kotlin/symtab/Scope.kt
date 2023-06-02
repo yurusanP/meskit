@@ -1,8 +1,8 @@
-package org.yurusanp.musket.symtab
+package org.yurusanp.meskit.symtab
 
 /**
  * A lexical scope with a symbol table,
- * Including the mappings from surface symbols to unique inner representations,
+ * Including the mappings from surface symbols to unique inner names,
  * and the mappings from struct (i.e., ctor) surface symbols to their symbol tables for fields.
  */
 class Scope(val parent: Scope?, private val symMan: SymMan) {
@@ -17,19 +17,21 @@ class Scope(val parent: Scope?, private val symMan: SymMan) {
 
   /**
    * Inserts a symbol into the scope,
-   * optionally providing a list for its fields inner representations if it is a constructor (i.e., struct) symbol.
+   * optionally providing a symbol table for its selectors if it is a constructor symbol.
    */
-  fun insert(sym: String, fieldInners: List<String>? = null): SymTabEntry = let {
-    val freshSym = symMan.gensym()
-    val entry = SymTabEntry(freshSym, fieldInners)
+  fun insert(sym: String, selSymTab: SymTab? = null): SymTabEntry = let {
+    val freshInner: String = symMan.genInner()
+    val entry = SymTabEntry(freshInner, selSymTab)
     symTab.insert(sym, entry)
+    // also create an inverse mapping
+    symMan.inverses.put(freshInner, sym)?.let { error("Duplicate inner name $freshInner.") }
     entry
   }
 
   /**
-   * Take a snapshot of the scope with its ancestors.
+   * Takes a snapshot of the scope with its ancestors.
    */
   fun snapshot(newSymMan: SymMan): Scope = Scope(parent?.snapshot(newSymMan), newSymMan).also { newScope ->
-    newScope.symTab.putAll(symTab)
+    newScope.symTab.insertAll(symTab)
   }
 }

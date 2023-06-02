@@ -30,25 +30,25 @@ sealed interface Stmt : Node {
   /**
    * Variable declaration.
    */
-  data class VarDec(val annSym: AnnSym) : Stmt {
-    override fun dump(): String = "${annSym.dump()};"
+  data class VarDec(val annedSym: AnnedSym) : Stmt {
+    override fun dump(): String = "${annedSym.dump()};"
   }
 
   /**
    * Variable definition.
    */
-  data class VarDef(val annSym: AnnSym, val expr: Expr) : Stmt {
-    override fun dump(): String = "${annSym.dump()} = ${expr.dump()};"
+  data class VarDef(val annedSym: AnnedSym, val expr: Expr) : Stmt {
+    override fun dump(): String = "${annedSym.dump()} = ${expr.dump()};"
   }
 
   /**
    * Function definition.
    */
-  data class FunDef(val annSym: AnnSym, val params: List<AnnSym>, val stmts: List<Stmt>) : Stmt {
+  data class FunDef(val annedSym: AnnedSym, val params: List<AnnedSym>, val stmts: List<Stmt>) : Stmt {
     override fun dump(): String = let {
-      val paramsDump = params.joinToString(", ", transform = AnnSym::dump)
+      val paramsDump = params.joinToString(", ", transform = AnnedSym::dump)
       val stmtsDump = stmts.joinToString(" ", transform = Stmt::dump)
-      "${annSym.dump()}($paramsDump) { $stmtsDump }"
+      "${annedSym.dump()}($paramsDump) { $stmtsDump }"
     }
   }
 

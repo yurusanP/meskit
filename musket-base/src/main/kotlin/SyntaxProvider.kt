@@ -1,20 +1,20 @@
 package org.yurusanp.musket
 
+import org.yurusanp.meskit.analysis.AnalyzerState
+import org.yurusanp.meskit.analysis.TermType
 import org.yurusanp.meskit.parser.SemGuSBaseVisitor
 import org.yurusanp.meskit.parser.SemGuSParser.*
-import org.yurusanp.meskit.util.normalize
-import org.yurusanp.musket.symtab.SymMan
-import org.yurusanp.musket.syntax.Ann
-import org.yurusanp.musket.syntax.Node
+import org.yurusanp.meskit.analysis.analyze
 import org.yurusanp.musket.syntax.Stmt
+import org.yurusanp.musket.translate.trans
 
-private class SyntaxProviderState(val symMan: SymMan = SymMan()) {
+private class SyntaxProviderState(val analyzerSt: AnalyzerState = AnalyzerState()) {
   val adTypeDefs: MutableList<Stmt.ADTypeDef> = mutableListOf()
 
   /**
-   * Returns a snapshot of the current state.
+   * Takes a snapshot of the current state.
    */
-  fun snapshot(): SyntaxProviderState = SyntaxProviderState(symMan.snapshot()).also { newSt ->
+  fun snapshot(): SyntaxProviderState = SyntaxProviderState(analyzerSt.snapshot()).also { newSt ->
     // each node is immutable, so we can just copy the references
     newSt.adTypeDefs.addAll(adTypeDefs)
   }
@@ -56,29 +56,7 @@ class SyntaxProvider : SemGuSBaseVisitor<Unit>() {
   }
 
   override fun visitDeclareTermTypesCommand(ctx: DeclareTermTypesCommandContext) {
-    val sortInners: List<String> = ctx.sortDec().asSequence().map { sortDecCtx ->
-      val sortSym: String = sortDecCtx.symbol().normalize()
-      st.symMan.curScope.insert(sortSym).inner
-    }.toList()
-
-    st.adTypeDefs += ctx.termTypeDec().asSequence().zip(sortInners.asSequence()).map { (termTypeDecCtx, inner) ->
-      val ctors: List<Node.Ctor> = termTypeDecCtx.termDec().asSequence().map { termDecCtx ->
-        val ctorComponents: List<String> = termDecCtx.symbol().map(SymbolContext::normalize).toList()
-        val fieldInners = (1 until ctorComponents.size).map { st.symMan.gensym() }
-        val (ctorInner) = st.symMan.curScope.insert(ctorComponents.first(), fieldInners)
-        Node.Ctor(
-          ctorInner,
-          ctorComponents.asSequence().drop(1).mapIndexed { i, fieldDType ->
-            Stmt.VarDec(Node.AnnSym(Ann.DType(st.symMan.curScope.lookup(fieldDType).inner), fieldInners[i]))
-          }.toList(),
-        )
-      }.toList()
-
-      Node.ADType(
-        inner,
-        ctors,
-        null,
-      )
-    }.map(Stmt::ADTypeDef)
+    val mesTermTypes: List<TermType> = ctx.analyze(st.analyzerSt)
+    st.adTypeDefs += mesTermTypes.map(TermType::trans).map(Stmt::ADTypeDef)
   }
 }
