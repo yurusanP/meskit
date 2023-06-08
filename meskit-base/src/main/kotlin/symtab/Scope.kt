@@ -10,6 +10,8 @@ class Scope(val parent: Scope?, private val symMan: SymMan) {
 
   /**
    * Looks up a symbol in the scope and its ancestors.
+   *
+   * TODO: sepearate namespaces
    */
   fun lookup(sym: String): SymTabEntry = symTab.lookup(sym)
     ?: parent?.lookup(sym)
