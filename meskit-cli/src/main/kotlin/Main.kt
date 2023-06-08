@@ -4,7 +4,7 @@ import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.subcommands
 import org.yurusanp.meskit.cli.repl.Repl
 import org.yurusanp.meskit.parser.SemGuSBaseVisitor
-import org.yurusanp.musket.SyntaxProvider
+import org.yurusanp.musket.syntax.SyntaxProvider
 
 private class Kit : CliktCommand() {
   override fun run() = Unit

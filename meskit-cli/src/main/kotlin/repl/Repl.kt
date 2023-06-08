@@ -5,13 +5,12 @@ import org.jline.reader.impl.DefaultHighlighter
 import org.jline.reader.impl.history.DefaultHistory
 import org.jline.terminal.Terminal
 import org.jline.terminal.TerminalBuilder
-import org.yurusanp.meskit.BaseInterpreter
-import org.yurusanp.meskit.cli.util.interpret
+import org.yurusanp.meskit.parser.interpret
 import org.yurusanp.meskit.parser.SemGuSVisitor
 import java.io.File
 
 // TODO: implement return type as pretty doc
-internal class Repl(private val interpreter: SemGuSVisitor<Unit> = BaseInterpreter()) {
+internal class Repl(private val interpreter: SemGuSVisitor<Unit>) {
   private val terminal: Terminal = TerminalBuilder.builder()
     .jansi(true)
     .build()

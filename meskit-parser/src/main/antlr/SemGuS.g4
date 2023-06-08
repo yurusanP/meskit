@@ -87,7 +87,7 @@ datatypeDec
     ;
 
 termDec
-    : '(' symbol symbol* ')'
+    : '(' symbol+ ')'
     ;
 
 termTypeDec

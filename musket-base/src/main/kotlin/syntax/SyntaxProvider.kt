@@ -1,24 +1,9 @@
-package org.yurusanp.musket
+package org.yurusanp.musket.syntax
 
-import org.yurusanp.meskit.analysis.AnalyzerState
-import org.yurusanp.meskit.analysis.TermType
+import org.yurusanp.meskit.analysis.Representation
 import org.yurusanp.meskit.parser.SemGuSBaseVisitor
 import org.yurusanp.meskit.parser.SemGuSParser.*
-import org.yurusanp.meskit.analysis.analyze
-import org.yurusanp.musket.syntax.Stmt
 import org.yurusanp.musket.translate.trans
-
-private class SyntaxProviderState(val analyzerSt: AnalyzerState = AnalyzerState()) {
-  val adTypeDefs: MutableList<Stmt.ADTypeDef> = mutableListOf()
-
-  /**
-   * Takes a snapshot of the current state.
-   */
-  fun snapshot(): SyntaxProviderState = SyntaxProviderState(analyzerSt.snapshot()).also { newSt ->
-    // each node is immutable, so we can just copy the references
-    newSt.adTypeDefs.addAll(adTypeDefs)
-  }
-}
 
 /**
  * Provides an AST for the Sketch language, assuming that the input is resolved and well-typed.
@@ -28,7 +13,7 @@ class SyntaxProvider : SemGuSBaseVisitor<Unit>() {
   private val states: ArrayDeque<SyntaxProviderState> = ArrayDeque(listOf(SyntaxProviderState()))
 
   // current state
-  private val st: SyntaxProviderState
+  val st: SyntaxProviderState
     get() = states.first()
 
   // state pushing and popping happens when changing assertion levels
@@ -56,7 +41,12 @@ class SyntaxProvider : SemGuSBaseVisitor<Unit>() {
   }
 
   override fun visitDeclareTermTypesCommand(ctx: DeclareTermTypesCommandContext) {
-    val mesTermTypes: List<TermType> = ctx.analyze(st.analyzerSt)
-    st.adTypeDefs += mesTermTypes.map(TermType::trans).map(Stmt::ADTypeDef)
+    val mesTermTypeDefs: List<Representation.TermTypeDef> = st.analyzer.visitDeclareTermTypesCommand(ctx)
+    st.adTypeDefs += mesTermTypeDefs.map(Representation.TermTypeDef::trans)
+  }
+
+  // TODO: support functions that are not semantic relations
+  override fun visitDefineFunsRecCommand(ctx: DefineFunsRecCommandContext) {
+    super.visitDefineFunsRecCommand(ctx)
   }
 }
