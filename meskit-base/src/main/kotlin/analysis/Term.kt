@@ -12,9 +12,9 @@ sealed interface Term : Representation {
 
   data class Let(val bindings: List<Representation.Binding>, val body: Term, override val attr: Map<String, AttrVal>? = null) : Term
 
-  data class Forall(val sortedInners: List<Representation.SortedInner>, val body: Term, override val attr: Map<String, AttrVal>? = null) : Term
+  data class Forall(val params: List<Representation.SortedInner>, val body: Term, override val attr: Map<String, AttrVal>? = null) : Term
 
-  data class Exists(val sortedInners: List<Representation.SortedInner>, val body: Term, override val attr: Map<String, AttrVal>? = null) : Term
+  data class Exists(val params: List<Representation.SortedInner>, val body: Term, override val attr: Map<String, AttrVal>? = null) : Term
 
   data class Match(val term: Term, val cases: List<Representation.Case>, override val attr: Map<String, AttrVal>? = null) : Term
 }

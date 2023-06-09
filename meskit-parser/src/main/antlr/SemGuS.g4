@@ -151,7 +151,7 @@ matchCase
     : '(' pattern term ')'
     ;
 
-// sort
+// sorts
 
 sort: identifier
     # simpleSort
