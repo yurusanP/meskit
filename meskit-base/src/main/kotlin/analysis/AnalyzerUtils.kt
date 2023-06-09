@@ -11,6 +11,11 @@ class AnalyzerState(val symMan: SymMan = SymMan()) {
   // TODO: shall I also store type checking info here?
 }
 
+sealed interface AnalyzerResult {
+  data class Single<R>(val rep: R) : AnalyzerResult
+  data class Multiple<R>(val reps: List<R>) : AnalyzerResult
+}
+
 class GrammarMatchException : IllegalStateException("Unhandled grammar match")
 
 fun ParserRuleContext.childTerminalNode(i: Int) = (this.getChild(i) as TerminalNode)

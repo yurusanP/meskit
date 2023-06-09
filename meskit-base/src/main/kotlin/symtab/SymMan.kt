@@ -16,6 +16,11 @@ class SymMan {
    */
   val inverses: MutableMap<String, String> = mutableMapOf()
 
+  /**
+   * For selector inner names, we also wish to store their corresponding constructor inner names.
+   */
+  val selsToCtors: MutableMap<String, String> = mutableMapOf()
+
   // the symbol count shared by all scopes
   private val symCnt = AtomicInteger(0)
 
@@ -47,6 +52,7 @@ class SymMan {
     val newCurScope = curScope.snapshot(newSymMan)
     newSymMan.curScope = newCurScope
     newSymMan.inverses.putAll(inverses)
+    newSymMan.selsToCtors.putAll(selsToCtors)
     newSymMan.symCnt.set(symCnt.get())
   }
 }

@@ -18,14 +18,14 @@ sealed interface Representation {
 
   data class Case(val inner: String, val params: List<String>, val body: Term) : Representation
 
-  // term type definition
+  // term types
 
   data class TermTypeDef(val sortDec: SortDec, val ctors: List<Ctor>) : Representation
+
+  data class Ctor(val inner: String, val sels: List<SelDec>) : Representation
 
   data class SortDec(val inner: String, val arity: Int) : Representation
 
   // TODO: Modify sortInner to sort
   data class SelDec(val sortInner: String, val inner: String) : Representation
-
-  data class Ctor(val inner: String, val sels: List<SelDec>) : Representation
 }

@@ -41,7 +41,7 @@ class SyntaxProvider : SemGuSBaseVisitor<Unit>() {
   }
 
   override fun visitDeclareTermTypesCommand(ctx: DeclareTermTypesCommandContext) {
-    val mesTermTypeDefs: List<Representation.TermTypeDef> = st.analyzer.visitDeclareTermTypesCommand(ctx)
+    val mesTermTypeDefs: List<Representation.TermTypeDef> = st.analyzer.visitDeclareTermTypesCommand(ctx).reps
     st.adTypeDefs += mesTermTypeDefs.map(Representation.TermTypeDef::trans)
   }
 

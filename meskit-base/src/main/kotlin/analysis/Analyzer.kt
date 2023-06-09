@@ -1,103 +1,110 @@
 package org.yurusanp.meskit.analysis
 
+import org.yurusanp.meskit.analysis.AnalyzerResult.Multiple
+import org.yurusanp.meskit.analysis.AnalyzerResult.Single
 import org.yurusanp.meskit.parser.SemGuSBaseVisitor
 import org.yurusanp.meskit.parser.SemGuSParser.*
-import org.yurusanp.meskit.symtab.SymTab
-import org.yurusanp.meskit.symtab.SymTabEntry
 
-class Analyzer(val st: AnalyzerState = AnalyzerState()) : SemGuSBaseVisitor<List<Representation>>() {
-  override fun visitDefineFunCommand(ctx: DefineFunCommandContext): List<Representation.FunDef> = let {
+class Analyzer(val st: AnalyzerState = AnalyzerState()) : SemGuSBaseVisitor<AnalyzerResult>() {
+  override fun visitDefineFunCommand(ctx: DefineFunCommandContext): Single<Representation.FunDef> = let {
     visitFunctionDef(ctx.functionDef())
   }
 
-  override fun visitFunctionDef(ctx: FunctionDefContext): List<Representation.FunDef> = let {
+  override fun visitFunctionDef(ctx: FunctionDefContext): Single<Representation.FunDef> = let {
     val funSym: String = ctx.symbol().normalize()
-    val funInner: String = st.symMan.curScope.insert(funSym).inner
+    val funInner: String = st.symMan.curScope.insertFun(funSym)
 
     // TODO: extract later?
     val params: List<Representation.SortedInner> = ctx.sortedVar().asSequence().map { sortedVarCtx ->
-      val varSort: Sort = visitSort(sortedVarCtx.sort()).first()
+      val varSort: Sort = representSort(sortedVarCtx.sort())
       val varSym: String = sortedVarCtx.symbol().normalize()
-      val varInner: String = st.symMan.curScope.insert(varSym).inner
+      val varInner: String = st.symMan.curScope.insertFun(varSym)
       Representation.SortedInner(varSort, varInner)
     }.toList()
 
-    val funDec = Representation.FunDec(funInner, params, visitSort(ctx.sort()).first())
+    val funDec = Representation.FunDec(funInner, params, representSort(ctx.sort()))
 
     // TODO: terms
 
-    listOf(Representation.FunDef(funDec, TODO()))
+    Single(Representation.FunDef(funDec, TODO()))
   }
 
-  private fun visitSort(ctx: SortContext): List<Sort> =
-    visit(ctx).map { it as Sort }
+  private fun representSort(ctx: SortContext): Sort = when (ctx) {
+    is SimpleSortContext -> visitSimpleSort(ctx).rep
+    is ParSortContext -> visitParSort(ctx).rep
+    else -> throw GrammarMatchException()
+  }
 
-  override fun visitSimpleSort(ctx: SimpleSortContext): List<Sort.Simple> =
-    listOf(Sort.Simple(visitIdentifier(ctx.identifier()).first()))
+  override fun visitSimpleSort(ctx: SimpleSortContext): Single<Sort.Simple> = let {
+    val ident: Ident = identifySort(ctx.identifier())
+    Single(Sort.Simple(ident))
+  }
 
-  override fun visitParSort(ctx: ParSortContext): List<Sort.Par> =
-    listOf(Sort.Par(visitIdentifier(ctx.identifier()).first(), ctx.sort().flatMap(::visitSort)))
+  override fun visitParSort(ctx: ParSortContext): Single<Sort.Par> = TODO()
 
-  private fun visitIdentifier(ctx: IdentifierContext): List<Ident> =
-    visit(ctx).map { it as Ident }
+  private fun identifySort(ctx: IdentifierContext): Ident = when (ctx) {
+    is SymbolIdentifierContext -> {
+      val sym: String = ctx.symbol().normalize()
+      val inner: String = st.symMan.curScope.lookupSort(sym)
+      Ident.Inner(inner)
+    }
 
-  override fun visitSymbolIdentifier(ctx: SymbolIdentifierContext): List<Ident.Inner> = let {
+    is IndexedIdentifierContext -> {
+      val sym: String = ctx.symbol().normalize()
+      val inner: String = st.symMan.curScope.lookupSort(sym)
+      val indices: List<Index> = ctx.index().map { representIndex(it) }
+      Ident.Indexed(inner, indices)
+    }
+
+    else -> throw GrammarMatchException()
+  }
+
+  private fun representIndex(ctx: IndexContext): Index = when (ctx) {
+    is NumIndexContext -> visitNumIndex(ctx).rep
+    is SymbolIndexContext -> visitSymbolIndex(ctx).rep
+    else -> throw GrammarMatchException()
+  }
+
+  override fun visitNumIndex(ctx: NumIndexContext): Single<Index.Num> =
+    Single(Index.Num(ctx.Numeral().symbol.text.toInt()))
+
+  override fun visitSymbolIndex(ctx: SymbolIndexContext): Single<Index.Inner> = let {
     val sym: String = ctx.symbol().normalize()
-    val inner: String = st.symMan.curScope.lookup(sym).inner
-    listOf(Ident.Inner(inner))
+    val inner: String = st.symMan.curScope.lookupIndex(sym)
+    Single(Index.Inner(inner))
   }
 
-  override fun visitIndexedIdentifier(ctx: IndexedIdentifierContext): List<Ident.Indexed> = let {
-    val sym: String = ctx.symbol().normalize()
-    val inner: String = st.symMan.curScope.lookup(sym).inner
-    val indices: List<Index> = ctx.index().flatMap(::visitIndex)
-    listOf(Ident.Indexed(inner, indices))
-  }
-
-  private fun visitIndex(ctx: IndexContext): List<Index> =
-    visit(ctx).map { it as Index }
-
-  override fun visitNumIndex(ctx: NumIndexContext): List<Index.Num> =
-    listOf(Index.Num(ctx.Numeral().symbol.text.toInt()))
-
-  override fun visitSymbolIndex(ctx: SymbolIndexContext): List<Index.Inner> = let {
-    val sym: String = ctx.symbol().normalize()
-    val inner: String = st.symMan.curScope.lookup(sym).inner
-    listOf(Index.Inner(inner))
-  }
-
-  override fun visitDeclareTermTypesCommand(ctx: DeclareTermTypesCommandContext): List<Representation.TermTypeDef> = let {
+  override fun visitDeclareTermTypesCommand(ctx: DeclareTermTypesCommandContext): Multiple<Representation.TermTypeDef> = let {
     // TODO: extract later?
     val sortDecs: List<Representation.SortDec> = ctx.sortDec().map { sortDecCtx ->
       val sortSym: String = sortDecCtx.symbol().normalize()
-      val sortInner: String = st.symMan.curScope.insert(sortSym).inner
+      val sortInner: String = st.symMan.curScope.insertSort(sortSym)
       val sortArity: Int = sortDecCtx.Numeral().symbol.text.toInt()
       Representation.SortDec(sortInner, sortArity)
     }
 
-    sortDecs.asSequence().zip(ctx.termTypeDec().asSequence()).map { (sortDec, termTypeDecCtx) ->
-      Representation.TermTypeDef(sortDec, visitTermTypeDec(termTypeDecCtx))
+    val reps: List<Representation.TermTypeDef> = sortDecs.asSequence().zip(ctx.termTypeDec().asSequence()).map { (sortDec, termTypeDecCtx) ->
+      Representation.TermTypeDef(sortDec, visitTermTypeDec(termTypeDecCtx).reps)
     }.toList()
+
+    Multiple(reps)
   }
 
-  override fun visitTermDec(ctx: TermDecContext): List<Representation.Ctor> = let {
+  override fun visitTermDec(ctx: TermDecContext): Single<Representation.Ctor> = let {
     val ctorComponents: List<String> = ctx.symbol().map(SymbolContext::normalize).toList()
-    // TODO: later when implementing datatypes, we should generate when inserting in the current scope instead
-    // term type constructors are special since there are no surface names for their selectors
-    val selInners: List<String> = (1 until ctorComponents.size).map { st.symMan.genInner() }
-    val selSymTab: SymTab = SymTab().apply {
-      selInners.forEach { selInner ->
-        // no surface names for term constructor selectors, so we just use the inner names
-        insert(selInner, SymTabEntry(selInner, null))
-      }
+    val ctorInner: String = st.symMan.curScope.insertFun(ctorComponents.first())
+    val selInners: List<String> = (1 until ctorComponents.size).map {
+      // term type constructors are special since there are no surface names for their selectors
+      st.symMan.curScope.insertFun(null, ctorInner)
     }
-    val ctorInner: String = st.symMan.curScope.insert(ctorComponents.first(), selSymTab).inner
+
     val selDecs: List<Representation.SelDec> = ctorComponents.asSequence().drop(1).mapIndexed { i, selSort ->
-      Representation.SelDec(st.symMan.curScope.lookup(selSort).inner, selInners[i])
+      Representation.SelDec(st.symMan.curScope.lookupSort(selSort), selInners[i])
     }.toList()
-    listOf(Representation.Ctor(ctorInner, selDecs))
+
+    Single(Representation.Ctor(ctorInner, selDecs))
   }
 
-  override fun visitTermTypeDec(ctx: TermTypeDecContext): List<Representation.Ctor> =
-    ctx.termDec().flatMap { visitTermDec(it) }
+  override fun visitTermTypeDec(ctx: TermTypeDecContext): Multiple<Representation.Ctor> =
+    Multiple(ctx.termDec().map { visitTermDec(it).rep })
 }
