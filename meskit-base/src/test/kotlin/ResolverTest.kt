@@ -1,11 +1,19 @@
 package org.yurusanp.meskit.resolver
 
 import io.kotest.core.spec.style.FunSpec
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import org.yurusanp.meskit.parser.solve
 import org.yurusanp.meskit.resolve.Resolver
 import org.yurusanp.meskit.resolve.ResolverResult
+import org.yurusanp.meskit.surface.Representation
+import org.yurusanp.meskit.symtab.inverse
 
 const val dollar = '$'
+
+val format = Json {
+  prettyPrint = true
+}
 
 class ResolverTest : FunSpec(
   {
@@ -34,9 +42,20 @@ class ResolverTest : FunSpec(
         )
       )
       """.trimIndent()
+
       val resolver = Resolver()
       val res: ResolverResult = input.solve(resolver)
-      println(res)
+
+      val serialized: String = format.encodeToString((res as ResolverResult.Multiple<Representation.TermTypeDef>).reps)
+      val inversed = serialized.inverse(resolver.st.symMan)
+//      println(serialized)
+      println(inversed)
+
+//      val deserialized: List<Representation.TermTypeDef> = format.decodeFromString(
+//        ListSerializer(Representation.TermTypeDef.serializer()),
+//        serialized,
+//      )
+//      println(deserialized)
     }
   },
 )

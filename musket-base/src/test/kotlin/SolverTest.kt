@@ -2,6 +2,7 @@ package org.yurusanp.meskit.musket.solver
 
 import io.kotest.core.spec.style.FunSpec
 import org.yurusanp.meskit.parser.solve
+import org.yurusanp.meskit.symtab.inverse
 import org.yurusanp.musket.solve.Solver
 
 const val dollar = '$'
@@ -33,16 +34,13 @@ class SolverTest : FunSpec(
         )
       )
       """.trimIndent()
+
       val solver = Solver()
       input.solve(solver)
 
-      // TODO: extract a helper later
-      val inverses: MutableMap<String, String> = solver.st.resolver.st.symMan.inverses
       solver.st.adTypeDefs.forEach { adTypeDef ->
         val dumped: String = adTypeDef.dump()
-        val inversed: String = dumped.replace(Regex("""MES__\d+""")) { matchResult ->
-          inverses[matchResult.value] ?: matchResult.value
-        }
+        val inversed: String = dumped.inverse(solver.st.resolver.st.symMan)
         println(dumped)
         println("// $inversed")
       }

@@ -1,6 +1,7 @@
 package org.yurusanp.meskit.parser
 
 import org.antlr.v4.runtime.*
+import org.yurusanp.meskit.parser.SemGuSParser.StartContext
 
 fun String.tokenize(): List<Token> = let { line ->
   val charStream: CodePointCharStream = CharStreams.fromString(line)
@@ -12,7 +13,7 @@ fun String.tokenize(): List<Token> = let { line ->
   tokenStream.tokens.dropLast(1)
 }
 
-fun <R> String.solve(solver: SemGuSVisitor<R>): R = let {
+fun String.parse(): StartContext = let {
   val charStream: CodePointCharStream = CharStreams.fromString(this)
   val lexer = SemGuSLexer(charStream).apply {
     removeErrorListeners()
@@ -23,7 +24,11 @@ fun <R> String.solve(solver: SemGuSVisitor<R>): R = let {
     removeErrorListeners()
     addErrorListener(ThrowingErrorListener)
   }
-  solver.visit(parser.start())
+  parser.start()
+}
+
+fun <R> String.solve(solver: SemGuSVisitor<R>): R = let { line ->
+  solver.visit(line.parse())
 }
 
 internal object ThrowingErrorListener : BaseErrorListener() {
