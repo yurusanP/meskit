@@ -162,10 +162,7 @@ sort: identifier
 // attributes
 
 attribute
-    : Keyword
-    # unitAttr
-    | Keyword attributeValue
-    # valuedAttr
+    : Keyword attributeValue?
     ;
 
 attributeValue

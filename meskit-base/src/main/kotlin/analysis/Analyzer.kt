@@ -140,15 +140,51 @@ class Analyzer(val st: AnalyzerState = AnalyzerState()) : SemGuSBaseVisitor<Anal
     Single(Term.Exists(params, body))
   }
 
-  override fun visitMatchTerm(ctx: MatchTermContext): Single<Term.Match> = TODO()
+  override fun visitMatchTerm(ctx: MatchTermContext): Single<Term.Match> = let {
+    val matchTerm: Term = representTerm(ctx.term())
+    val cases: List<Representation.Case> = ctx.matchCase().map { matchCaseCtx ->
+      visitMatchCase(matchCaseCtx).rep
+    }
+    Single(Term.Match(matchTerm, cases))
+  }
 
-  override fun visitAttrTerm(ctx: AttrTermContext): Single<Term> = TODO()
+  override fun visitAttrTerm(ctx: AttrTermContext): Single<Term> = let {
+    val attrs: Map<String, AttrVal> = ctx.attribute().asSequence().map { attributeCtx ->
+      when (val keyword: String = attributeCtx.Keyword().text) {
+        ":input", ":output" -> keyword to representIOAttrVal(attributeCtx.attributeValue())
+        else -> throw GrammarMatchException()
+      }
+    }.toMap()
+    val newTerm = representTerm(ctx.term()).also { term -> term.attrs = attrs }
+    Single(newTerm)
+  }
 
   override fun visitSortedVar(ctx: SortedVarContext): Single<Representation.SortedInner> = let {
     val varSort: Sort = representSort(ctx.sort())
     val varSym: String = ctx.symbol().normalize()
     val varInner: String = st.symMan.curScope.insertFun(varSym)
     Single(Representation.SortedInner(varSort, varInner))
+  }
+
+  override fun visitMatchCase(ctx: MatchCaseContext): Single<Representation.Case> = let {
+    val patternComponents: List<String> = when (val patternCtx: PatternContext = ctx.pattern()) {
+      is SymbolPatternContext -> listOf(patternCtx.symbol().normalize())
+      is AppPatternContext -> patternCtx.symbol().map(SymbolContext::normalize)
+      else -> throw GrammarMatchException()
+    }
+
+    val ctorInner: String = st.symMan.curScope.lookupFun(patternComponents.first())
+
+    // the pattern parameters could be looked up in the body only
+    st.symMan.pushScope()
+    val params: List<String> = patternComponents.asSequence().drop(1).map { paramSym ->
+      st.symMan.curScope.insertFun(paramSym)
+    }.toList()
+
+    val body: Term = representTerm(ctx.term())
+    st.symMan.popScope()
+
+    Single(Representation.Case(ctorInner, params, body))
   }
 
   // sorts
@@ -165,6 +201,27 @@ class Analyzer(val st: AnalyzerState = AnalyzerState()) : SemGuSBaseVisitor<Anal
   }
 
   override fun visitParSort(ctx: ParSortContext): Single<Sort.Par> = TODO()
+
+  // attributes
+
+  private fun representIOAttrVal(ctx: AttributeValueContext): AttrVal.Composite = let {
+    if (ctx !is SexprAttrValContext) throw GrammarMatchException()
+
+    val attrVals: List<AttrVal> = ctx.sexpr().map { sexprCtx ->
+      val attrValSexprCtx: AttrValSexprContext = sexprCtx
+        as? AttrValSexprContext ?: throw GrammarMatchException()
+
+      val symbolAttrValCtx: SymbolAttrValContext = attrValSexprCtx.attributeValue()
+        as? SymbolAttrValContext ?: throw GrammarMatchException()
+
+      val sym: String = symbolAttrValCtx.symbol().normalize()
+      val inner: String = st.symMan.curScope.lookupFun(sym)
+
+      AttrVal.Inner(inner)
+    }
+
+    AttrVal.Composite(attrVals)
+  }
 
   // identifiers
 
