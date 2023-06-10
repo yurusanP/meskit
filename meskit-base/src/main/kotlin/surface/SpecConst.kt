@@ -1,4 +1,4 @@
-package org.yurusanp.meskit.analysis
+package org.yurusanp.meskit.surface
 
 sealed interface SpecConst : Representation {
   data class Num(val value: Int) : SpecConst

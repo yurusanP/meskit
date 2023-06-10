@@ -1,4 +1,4 @@
-package org.yurusanp.meskit.analysis
+package org.yurusanp.meskit.surface
 
 // TODO: process qual in type checking
 sealed interface Ident : Representation {

@@ -4,7 +4,7 @@ import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.subcommands
 import org.yurusanp.meskit.cli.repl.Repl
 import org.yurusanp.meskit.parser.SemGuSBaseVisitor
-import org.yurusanp.musket.syntax.SyntaxProvider
+import org.yurusanp.musket.solve.Solver
 
 private class Kit : CliktCommand() {
   override fun run() = Unit
@@ -19,7 +19,7 @@ private class Parser : CliktCommand() {
 
 private class Musket : CliktCommand() {
   override fun run() {
-    val repl = Repl(SyntaxProvider())
+    val repl = Repl(Solver())
     repl.start()
   }
 }

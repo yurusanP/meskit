@@ -5,12 +5,12 @@ import org.jline.reader.impl.DefaultHighlighter
 import org.jline.reader.impl.history.DefaultHistory
 import org.jline.terminal.Terminal
 import org.jline.terminal.TerminalBuilder
-import org.yurusanp.meskit.parser.interpret
+import org.yurusanp.meskit.parser.solve
 import org.yurusanp.meskit.parser.SemGuSVisitor
 import java.io.File
 
 // TODO: implement return type as pretty doc
-internal class Repl(private val interpreter: SemGuSVisitor<Unit>) {
+internal class Repl(private val solver: SemGuSVisitor<Unit>) {
   private val terminal: Terminal = TerminalBuilder.builder()
     .jansi(true)
     .build()
@@ -42,7 +42,7 @@ internal class Repl(private val interpreter: SemGuSVisitor<Unit>) {
     while (true) {
       try {
         val line: String = reader.readLine(">>> ")
-        line.interpret(interpreter)
+        line.solve(solver)
       } catch (e: UserInterruptException) {
         // Ignore
       } catch (e: EndOfFileException) {

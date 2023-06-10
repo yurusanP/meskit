@@ -1,6 +1,6 @@
 package org.yurusanp.musket.translate
 
-import org.yurusanp.meskit.analysis.Representation
+import org.yurusanp.meskit.surface.Representation
 import org.yurusanp.musket.syntax.Ann
 import org.yurusanp.musket.syntax.Node
 import org.yurusanp.musket.syntax.Stmt

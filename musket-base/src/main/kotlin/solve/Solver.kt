@@ -1,19 +1,16 @@
-package org.yurusanp.musket.syntax
+package org.yurusanp.musket.solve
 
-import org.yurusanp.meskit.analysis.Representation
+import org.yurusanp.meskit.surface.Representation
 import org.yurusanp.meskit.parser.SemGuSBaseVisitor
 import org.yurusanp.meskit.parser.SemGuSParser.*
 import org.yurusanp.musket.translate.trans
 
-/**
- * Provides an AST for the Sketch language, assuming that the input is resolved and well-typed.
- */
-class SyntaxProvider : SemGuSBaseVisitor<Unit>() {
+class Solver : SemGuSBaseVisitor<Unit>() {
   // stack of states
-  private val states: ArrayDeque<SyntaxProviderState> = ArrayDeque(listOf(SyntaxProviderState()))
+  private val states: ArrayDeque<SolverState> = ArrayDeque(listOf(SolverState()))
 
   // current state
-  val st: SyntaxProviderState
+  val st: SolverState
     get() = states.first()
 
   // state pushing and popping happens when changing assertion levels
@@ -41,7 +38,7 @@ class SyntaxProvider : SemGuSBaseVisitor<Unit>() {
   }
 
   override fun visitDeclareTermTypesCommand(ctx: DeclareTermTypesCommandContext) {
-    val mesTermTypeDefs: List<Representation.TermTypeDef> = st.analyzer.visitDeclareTermTypesCommand(ctx).reps
+    val mesTermTypeDefs: List<Representation.TermTypeDef> = st.resolver.visitDeclareTermTypesCommand(ctx).reps
     st.adTypeDefs += mesTermTypeDefs.map(Representation.TermTypeDef::trans)
   }
 

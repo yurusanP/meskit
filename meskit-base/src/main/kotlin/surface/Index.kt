@@ -1,4 +1,4 @@
-package org.yurusanp.meskit.analysis
+package org.yurusanp.meskit.surface
 
 sealed interface Index : Representation {
   // NOTE: not appearing in SMT-LIB defined theories

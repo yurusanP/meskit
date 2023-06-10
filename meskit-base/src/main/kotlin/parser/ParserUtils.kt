@@ -12,7 +12,7 @@ fun String.tokenize(): List<Token> = let { line ->
   tokenStream.tokens.dropLast(1)
 }
 
-fun <R> String.interpret(interpreter: SemGuSVisitor<R>): R = let {
+fun <R> String.solve(solver: SemGuSVisitor<R>): R = let {
   val charStream: CodePointCharStream = CharStreams.fromString(this)
   val lexer = SemGuSLexer(charStream).apply {
     removeErrorListeners()
@@ -23,7 +23,7 @@ fun <R> String.interpret(interpreter: SemGuSVisitor<R>): R = let {
     removeErrorListeners()
     addErrorListener(ThrowingErrorListener)
   }
-  interpreter.visit(parser.start())
+  solver.visit(parser.start())
 }
 
 internal object ThrowingErrorListener : BaseErrorListener() {

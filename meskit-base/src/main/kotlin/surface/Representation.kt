@@ -1,7 +1,7 @@
-package org.yurusanp.meskit.analysis
+package org.yurusanp.meskit.surface
 
 /**
- * Representation of meskit analysis result.
+ * Representation of meskit resolver result.
  */
 sealed interface Representation {
   // function definition

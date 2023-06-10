@@ -1,12 +1,16 @@
-package org.yurusanp.meskit.analysis
+package org.yurusanp.meskit.resolve
 
-import org.yurusanp.meskit.analysis.AnalyzerResult.Multiple
-import org.yurusanp.meskit.analysis.AnalyzerResult.Single
+import org.yurusanp.meskit.resolve.ResolverResult.Multiple
+import org.yurusanp.meskit.resolve.ResolverResult.Single
 import org.yurusanp.meskit.parser.SemGuSBaseVisitor
 import org.yurusanp.meskit.parser.SemGuSParser
 import org.yurusanp.meskit.parser.SemGuSParser.*
+import org.yurusanp.meskit.surface.*
 
-class Analyzer(val st: AnalyzerState = AnalyzerState()) : SemGuSBaseVisitor<AnalyzerResult>() {
+class Resolver(val st: ResolverState = ResolverState()) : SemGuSBaseVisitor<ResolverResult>() {
+  // NOTE: avoid aggregating result of EOF
+  override fun visitStart(ctx: StartContext): ResolverResult = visitScript(ctx.script())
+
   // commands
 
   override fun visitDeclareTermTypesCommand(ctx: DeclareTermTypesCommandContext): Multiple<Representation.TermTypeDef> = let {

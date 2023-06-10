@@ -1,12 +1,12 @@
-package org.meskit.musket
+package org.yurusanp.meskit.musket.solver
 
 import io.kotest.core.spec.style.FunSpec
-import org.yurusanp.meskit.parser.interpret
-import org.yurusanp.musket.syntax.SyntaxProvider
+import org.yurusanp.meskit.parser.solve
+import org.yurusanp.musket.solve.Solver
 
 const val dollar = '$'
 
-class SyntaxProviderTest : FunSpec(
+class SolverTest : FunSpec(
   {
     test("Translate term types E, B") {
       val input = """
@@ -33,11 +33,12 @@ class SyntaxProviderTest : FunSpec(
         )
       )
       """.trimIndent()
-      val syntaxProvider = SyntaxProvider()
-      input.interpret(syntaxProvider)
+      val solver = Solver()
+      input.solve(solver)
 
-      val inverses: MutableMap<String, String> = syntaxProvider.st.analyzer.st.symMan.inverses
-      syntaxProvider.st.adTypeDefs.forEach { adTypeDef ->
+      // TODO: extract a helper later
+      val inverses: MutableMap<String, String> = solver.st.resolver.st.symMan.inverses
+      solver.st.adTypeDefs.forEach { adTypeDef ->
         val dumped: String = adTypeDef.dump()
         val inversed: String = dumped.replace(Regex("""MES__\d+""")) { matchResult ->
           inverses[matchResult.value] ?: matchResult.value
