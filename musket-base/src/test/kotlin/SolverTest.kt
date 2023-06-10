@@ -9,7 +9,7 @@ const val dollar = '$'
 
 class SolverTest : FunSpec(
   {
-    test("Translate term types E, B") {
+    test("Translate term type declaration for E, B") {
       val input = """
       (declare-term-types
         ((E 0) (B 0))
@@ -20,7 +20,7 @@ class SolverTest : FunSpec(
             (${dollar}z)
             (${dollar}0)
             (${dollar}1)
-            (${dollar}+)
+            (${dollar}+ E E)
             (${dollar}ite B E E)
           )
           (

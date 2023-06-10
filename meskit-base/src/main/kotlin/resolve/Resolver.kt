@@ -1,15 +1,24 @@
 package org.yurusanp.meskit.resolve
 
-import org.yurusanp.meskit.resolve.ResolverResult.Multiple
-import org.yurusanp.meskit.resolve.ResolverResult.Single
 import org.yurusanp.meskit.parser.SemGuSBaseVisitor
 import org.yurusanp.meskit.parser.SemGuSParser
 import org.yurusanp.meskit.parser.SemGuSParser.*
+import org.yurusanp.meskit.resolve.ResolverResult.Multiple
+import org.yurusanp.meskit.resolve.ResolverResult.Single
 import org.yurusanp.meskit.surface.*
 
 class Resolver(val st: ResolverState = ResolverState()) : SemGuSBaseVisitor<ResolverResult>() {
   // NOTE: avoid aggregating result of EOF
-  override fun visitStart(ctx: StartContext): ResolverResult = visitScript(ctx.script())
+  override fun visitStart(ctx: StartContext): Multiple<Representation> {
+    val reps: List<Representation> = ctx.script().command().flatMap { commandCtx -> representCommand(commandCtx) }
+    return Multiple(reps)
+  }
+
+  private fun representCommand(ctx: CommandContext): List<Representation> = when (ctx) {
+    is DeclareTermTypesCommandContext -> visitDeclareTermTypesCommand(ctx).reps
+    is DefineFunCommandContext -> listOf(visitDefineFunCommand(ctx).rep)
+    else -> throw GrammarMatchException()
+  }
 
   // commands
 

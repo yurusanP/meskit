@@ -50,6 +50,22 @@ class Scope(val parent: Scope?, private val symMan: SymMan) {
   }
 
   /**
+   * Inserts a function symbol into the scope.
+   */
+  fun insertFun(sym: String?, ctorInner: String? = null): String = let {
+    val freshInner: String = symMan.genInner()
+    val symNotNull = sym ?: freshInner
+    funSymTab.insert(symNotNull, freshInner)
+    // also create an inverse mapping
+    symMan.inverses.put(freshInner, symNotNull)?.let { error("Duplicate inner name $freshInner.") }
+    // also create the mapping to constructor inner name
+    ctorInner?.let { ctorInner ->
+      symMan.selsToCtors.put(freshInner, ctorInner)?.let { error("Duplicate inner name $freshInner.") }
+    }
+    freshInner
+  }
+
+  /**
    * Inserts an index symbol into the scope.
    */
   fun insertIndex(sym: String): String = let {
@@ -57,22 +73,6 @@ class Scope(val parent: Scope?, private val symMan: SymMan) {
     indexSymTab.insert(sym, freshInner)
     // also create an inverse mapping
     symMan.inverses.put(freshInner, sym)?.let { error("Duplicate inner name $freshInner.") }
-    freshInner
-  }
-
-  /**
-   * Inserts a function symbol into the scope.
-   */
-  fun insertFun(sym: String?, ctorInner: String? = null): String = let {
-    val freshInner: String = symMan.genInner()
-    val symNotNull = sym ?: freshInner
-    sortSymTab.insert(symNotNull, freshInner)
-    // also create an inverse mapping
-    symMan.inverses.put(freshInner, symNotNull)?.let { error("Duplicate inner name $freshInner.") }
-    // also create the mapping to constructor inner name
-    ctorInner?.let { ctorInner ->
-      symMan.selsToCtors.put(freshInner, ctorInner)?.let { error("Duplicate inner name $freshInner.") }
-    }
     freshInner
   }
 
