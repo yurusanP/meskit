@@ -1,43 +1,34 @@
 package org.yurusanp.meskit.surface
 
 import kotlinx.serialization.Serializable
+import org.yurusanp.meskit.symtab.Inner
 
 /**
  * Representation of meskit resolver result.
  */
 @Serializable
 sealed interface Representation {
-  // function definition
+  // ident
 
   @Serializable
-  data class FunDef(val funDec: FunDec, val body: Term) : Representation
+  data class IndexedInner(val name: Inner, val indices: List<Index>? = null) : Representation
+
+  // def
 
   @Serializable
-  data class FunDec(val inner: String, val params: List<SortedInner>, val retSort: Sort) : Representation
+  data class SortedInner(val name: Inner, val sort: Ident.Sort) : Representation
+
+  @Serializable
+  data class Lambda(val inputs: List<SortedInner>, val output: Term, val outputSort: Ident.Sort) : Representation
+
+  @Serializable
+  data class Ctor(val name: Inner, val sels: List<SortedInner>) : Representation
 
   // term
 
   @Serializable
-  data class Binding(val inner: String, val term: Term) : Representation
+  data class Binding(val name: Inner, val term: Term) : Representation
 
   @Serializable
-  data class SortedInner(val sort: Sort, val inner: String) : Representation
-
-  @Serializable
-  data class Case(val inner: String, val params: List<String>, val body: Term) : Representation
-
-  // term types
-
-  @Serializable
-  data class TermTypeDef(val sortDec: SortDec, val ctors: List<Ctor>) : Representation
-
-  @Serializable
-  data class Ctor(val inner: String, val sels: List<SelDec>) : Representation
-
-  @Serializable
-  data class SortDec(val inner: String, val arity: Int) : Representation
-
-  // TODO: Modify sortInner to sort
-  @Serializable
-  data class SelDec(val sortInner: String, val inner: String) : Representation
+  data class Case(val name: Inner, val params: List<Inner>, val body: Term) : Representation
 }

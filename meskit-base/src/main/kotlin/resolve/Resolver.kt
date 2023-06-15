@@ -6,6 +6,8 @@ import org.yurusanp.meskit.parser.SemGuSParser.*
 import org.yurusanp.meskit.resolve.ResolverResult.Multiple
 import org.yurusanp.meskit.resolve.ResolverResult.Single
 import org.yurusanp.meskit.surface.*
+import org.yurusanp.meskit.symtab.Inner
+import org.yurusanp.meskit.symtab.Scope
 
 class Resolver(val st: ResolverState = ResolverState()) : SemGuSBaseVisitor<ResolverResult>() {
   // NOTE: avoid aggregating result of EOF
@@ -22,63 +24,55 @@ class Resolver(val st: ResolverState = ResolverState()) : SemGuSBaseVisitor<Reso
 
   // commands
 
-  override fun visitDeclareTermTypesCommand(ctx: DeclareTermTypesCommandContext): Multiple<Representation.TermTypeDef> = let {
-    // TODO: extract later?
-    val sortDecs: List<Representation.SortDec> = ctx.sortDec().map { sortDecCtx ->
-      val sortSym: String = sortDecCtx.symbol().normalize()
-      // term-type definition could be recursive
-      val sortInner: String = st.symMan.curScope.insertSort(sortSym)
-      val sortArity: Int = sortDecCtx.Numeral().symbol.text.toInt()
-      Representation.SortDec(sortInner, sortArity)
+  override fun visitDeclareTermTypesCommand(ctx: DeclareTermTypesCommandContext): Multiple<Def.SortFam> = let {
+    val termTypeNames: List<Inner> = ctx.sortDec().map { sortDecCtx ->
+      val name: Inner = insertSortSymbol(sortDecCtx.symbol())
+      val arity: Int = sortDecCtx.Numeral().symbol.text.toInt()
+      if (arity != 0) throw ResolverCheckException("Term type arity must be 0")
+      name
+    }
+    val termTypeDefs: List<Def.SortFam> = ctx.termTypeDec().zip(termTypeNames) { termTypeDecCtx, termTypeName ->
+      Def.SortFam(termTypeName, visitTermTypeDec(termTypeDecCtx).reps)
     }
 
-    val reps: List<Representation.TermTypeDef> = sortDecs.zip(ctx.termTypeDec()) { sortDec, termTypeDecCtx ->
-      Representation.TermTypeDef(sortDec, visitTermTypeDec(termTypeDecCtx).reps)
-    }.toList()
-
-    Multiple(reps)
+    Multiple(termTypeDefs)
   }
 
-  override fun visitDefineFunCommand(ctx: DefineFunCommandContext): Single<Representation.FunDef> =
+  override fun visitDefineFunCommand(ctx: DefineFunCommandContext): Single<Def.FunFam> =
     visitFunctionDef(ctx.functionDef())
 
   override fun visitTermDec(ctx: TermDecContext): Single<Representation.Ctor> = let {
-    val ctorComponents: List<String> = ctx.symbol().map(SymbolContext::normalize).toList()
-    val ctorInner: String = st.symMan.curScope.insertFun(ctorComponents.first())
-    val selInners: List<String> = (1 until ctorComponents.size).map {
+    val ctorName: Inner = insertFunSymbol(ctx.symbol().first())
+    val selNames: List<Inner> = (1 until ctx.symbol().size).map {
       // term type constructors are special since there are no surface names for their selectors
-      st.symMan.curScope.insertFun(null, ctorInner)
+      st.symMan.curScope.insert("fun", null)
     }
-
-    val selDecs: List<Representation.SelDec> = ctorComponents.asSequence().drop(1).zip(selInners.asSequence()) { selSort, selInner ->
-      Representation.SelDec(st.symMan.curScope.lookupSort(selSort), selInner)
+    val sels: List<Representation.SortedInner> = ctx.symbol().asSequence().drop(1).zip(selNames.asSequence()) { selSortSymbolCtx, selName ->
+      val selSortName: Inner = lookupSortSymbol(selSortSymbolCtx)
+      val selSort: Ident.Sort = Ident.Sort(Representation.IndexedInner(selSortName))
+      Representation.SortedInner(selName, selSort)
     }.toList()
 
-    Single(Representation.Ctor(ctorInner, selDecs))
+    Single(Representation.Ctor(ctorName, sels))
   }
 
   override fun visitTermTypeDec(ctx: TermTypeDecContext): Multiple<Representation.Ctor> =
     Multiple(ctx.termDec().map { visitTermDec(it).rep })
 
-  override fun visitFunctionDef(ctx: FunctionDefContext): Single<Representation.FunDef> = let {
-    // the parameters could be looked up in the body only
+  override fun visitFunctionDef(ctx: FunctionDefContext): Single<Def.FunFam> = let {
+    // the input params could be looked up in the output term only
     st.symMan.pushScope()
-    // TODO: extract later?
-    val params: List<Representation.SortedInner> = ctx.sortedVar().map { sortedVarCtx ->
+    val inputs: List<Representation.SortedInner> = ctx.sortedVar().map { sortedVarCtx ->
       visitSortedVar(sortedVarCtx).rep
     }
-
-    // TODO: body
-    val body: Term = representTerm(ctx.term())
+    val output: Term = representTerm(ctx.term())
     st.symMan.popScope()
 
-    val funSym: String = ctx.symbol().normalize()
-    // function definition should be non-recursive
-    val funInner: String = st.symMan.curScope.insertFun(funSym)
+    val funName: Inner = insertFunSymbol(ctx.symbol())
+    val outputSort: Ident.Sort = representSort(ctx.sort())
+    val lambda = Representation.Lambda(inputs, output, outputSort)
 
-    val funDec = Representation.FunDec(funInner, params, representSort(ctx.sort()))
-
-    Single(Representation.FunDef(funDec, body))
+    Single(Def.FunFam(funName, lambda))
   }
 
   // terms
@@ -99,10 +93,10 @@ class Resolver(val st: ResolverState = ResolverState()) : SemGuSBaseVisitor<Reso
     Single(Term.Literal(visitSpecConstant(ctx.specConstant()).rep))
 
   override fun visitRefTerm(ctx: RefTermContext): Single<Term.Ref> =
-    Single(Term.Ref(identifyFun(ctx.qualIdentifier())))
+    Single(Term.Ref(representQualIdentifier(ctx.qualIdentifier())))
 
   override fun visitAppTerm(ctx: AppTermContext): Single<Term.App> = let {
-    val ident: Ident = identifyFun(ctx.qualIdentifier())
+    val ident: Ident.Fun = representQualIdentifier(ctx.qualIdentifier())
     val args: List<Term> = ctx.term().map { termCtx -> representTerm(termCtx) }
     Single(Term.App(ident, args))
   }
@@ -116,11 +110,9 @@ class Resolver(val st: ResolverState = ResolverState()) : SemGuSBaseVisitor<Reso
     // the bindings could be looked up in the body only
     st.symMan.pushScope()
     val bindings: List<Representation.Binding> = ctx.varBinding().zip(bindingTerms) { varBindingCtx, bindingTerm ->
-      val varSym: String = varBindingCtx.symbol().normalize()
-      val inner: String = st.symMan.curScope.insertFun(varSym)
-      Representation.Binding(inner, bindingTerm)
+      val name: Inner = insertFunSymbol(varBindingCtx.symbol())
+      Representation.Binding(name, bindingTerm)
     }
-
     val body: Term = representTerm(ctx.term())
     st.symMan.popScope()
 
@@ -133,7 +125,6 @@ class Resolver(val st: ResolverState = ResolverState()) : SemGuSBaseVisitor<Reso
     val params: List<Representation.SortedInner> = ctx.sortedVar().map { sortedVarCtx ->
       visitSortedVar(sortedVarCtx).rep
     }
-
     val body: Term = representTerm(ctx.term())
     st.symMan.popScope()
 
@@ -146,7 +137,6 @@ class Resolver(val st: ResolverState = ResolverState()) : SemGuSBaseVisitor<Reso
     val params: List<Representation.SortedInner> = ctx.sortedVar().map { sortedVarCtx ->
       visitSortedVar(sortedVarCtx).rep
     }
-
     val body: Term = representTerm(ctx.term())
     st.symMan.popScope()
 
@@ -172,48 +162,67 @@ class Resolver(val st: ResolverState = ResolverState()) : SemGuSBaseVisitor<Reso
     Single(newTerm)
   }
 
+  private fun representQualIdentifier(ctx: QualIdentifierContext): Ident.Fun = when (ctx) {
+    is SimpleQualContext -> visitSimpleQual(ctx).rep
+    is AsQualContext -> visitAsQual(ctx).rep
+    else -> throw GrammarMatchException()
+  }
+
+  override fun visitSimpleQual(ctx: SimpleQualContext): Single<Ident.Fun> = let {
+    val indexed: Representation.IndexedInner = identifyFun(ctx.identifier())
+    Single(Ident.Fun(indexed))
+  }
+
+  override fun visitAsQual(ctx: AsQualContext): Single<Ident.Fun> = let {
+    val indexed: Representation.IndexedInner = identifyFun(ctx.identifier())
+    val qual: Ident.Sort = representSort(ctx.sort())
+    Single(Ident.Fun(indexed, qual))
+  }
+
   override fun visitSortedVar(ctx: SortedVarContext): Single<Representation.SortedInner> = let {
-    val varSort: Sort = representSort(ctx.sort())
-    val varSym: String = ctx.symbol().normalize()
-    val varInner: String = st.symMan.curScope.insertFun(varSym)
-    Single(Representation.SortedInner(varSort, varInner))
+    val varName: Inner = insertFunSymbol(ctx.symbol())
+    val varSort: Ident.Sort = representSort(ctx.sort())
+    Single(Representation.SortedInner(varName, varSort))
   }
 
   override fun visitMatchCase(ctx: MatchCaseContext): Single<Representation.Case> = let {
-    val patternComponents: List<String> = when (val patternCtx: PatternContext = ctx.pattern()) {
-      is SymbolPatternContext -> listOf(patternCtx.symbol().normalize())
-      is AppPatternContext -> patternCtx.symbol().map(SymbolContext::normalize)
+    val patternSymbolCtxs: List<SymbolContext> = when (val patternCtx: PatternContext = ctx.pattern()) {
+      is SymbolPatternContext -> listOf(patternCtx.symbol())
+      is AppPatternContext -> patternCtx.symbol()
       else -> throw GrammarMatchException()
     }
 
-    val ctorInner: String = st.symMan.curScope.lookupFun(patternComponents.first())
+    val ctorName: Inner = lookupFunSymbol(patternSymbolCtxs.first())
 
     // the pattern parameters could be looked up in the body only
     st.symMan.pushScope()
-    val params: List<String> = patternComponents.asSequence().drop(1).map { paramSym ->
-      st.symMan.curScope.insertFun(paramSym)
+    val params: List<Inner> = patternSymbolCtxs.asSequence().drop(1).map { paramSymbolCtx ->
+      insertFunSymbol(paramSymbolCtx)
     }.toList()
-
     val body: Term = representTerm(ctx.term())
     st.symMan.popScope()
 
-    Single(Representation.Case(ctorInner, params, body))
+    Single(Representation.Case(ctorName, params, body))
   }
 
   // sorts
 
-  private fun representSort(ctx: SortContext): Sort = when (ctx) {
+  private fun representSort(ctx: SortContext): Ident.Sort = when (ctx) {
     is SimpleSortContext -> visitSimpleSort(ctx).rep
     is ParSortContext -> visitParSort(ctx).rep
     else -> throw GrammarMatchException()
   }
 
-  override fun visitSimpleSort(ctx: SimpleSortContext): Single<Sort.Simple> = let {
-    val ident: Ident = identifySort(ctx.identifier())
-    Single(Sort.Simple(ident))
+  override fun visitSimpleSort(ctx: SimpleSortContext): Single<Ident.Sort> = let {
+    val indexed: Representation.IndexedInner = identifySort(ctx.identifier())
+    Single(Ident.Sort(indexed))
   }
 
-  override fun visitParSort(ctx: ParSortContext): Single<Sort.Par> = TODO()
+  override fun visitParSort(ctx: ParSortContext): Single<Ident.Sort> = let {
+    val indexed: Representation.IndexedInner = identifySort(ctx.identifier())
+    val args: List<Ident.Sort> = ctx.sort().map { sortCtx -> representSort(sortCtx) }
+    Single(Ident.Sort(indexed, args))
+  }
 
   // attributes
 
@@ -227,10 +236,8 @@ class Resolver(val st: ResolverState = ResolverState()) : SemGuSBaseVisitor<Reso
       val symbolAttrValCtx: SymbolAttrValContext = attrValSexprCtx.attributeValue()
         as? SymbolAttrValContext ?: throw GrammarMatchException()
 
-      val sym: String = symbolAttrValCtx.symbol().normalize()
-      val inner: String = st.symMan.curScope.lookupFun(sym)
-
-      AttrVal.Inner(inner)
+      val name: Inner = lookupFunSymbol(symbolAttrValCtx.symbol())
+      AttrVal.Symbol(name)
     }
 
     AttrVal.Composite(attrVals)
@@ -238,27 +245,22 @@ class Resolver(val st: ResolverState = ResolverState()) : SemGuSBaseVisitor<Reso
 
   // identifiers
 
-  private fun identifySort(ctx: IdentifierContext): Ident =
-    representIdentifier(ctx, st.symMan.curScope::lookupSort)
+  private fun identifySort(ctx: IdentifierContext): Representation.IndexedInner =
+    representIdentifier(ctx) { symbolCtx -> lookupSortSymbol(symbolCtx) }
 
-  // TODO: deal with qual later
-  private fun identifyFun(ctx: QualIdentifierContext): Ident = when (ctx) {
-    is SimpleQualContext -> representIdentifier(ctx.identifier(), st.symMan.curScope::lookupFun)
-    else -> throw GrammarMatchException()
-  }
+  private fun identifyFun(ctx: IdentifierContext): Representation.IndexedInner =
+    representIdentifier(ctx) { symbolCtx -> lookupFunSymbol(symbolCtx) }
 
-  private fun representIdentifier(ctx: IdentifierContext, lookup: (String) -> String): Ident = when (ctx) {
+  private fun representIdentifier(ctx: IdentifierContext, lookup: (SymbolContext) -> Inner): Representation.IndexedInner = when (ctx) {
     is SymbolIdentifierContext -> {
-      val sym: String = ctx.symbol().normalize()
-      val inner: String = lookup(sym)
-      Ident.Inner(inner)
+      val name: Inner = lookup(ctx.symbol())
+      Representation.IndexedInner(name)
     }
 
     is IndexedIdentifierContext -> {
-      val sym: String = ctx.symbol().normalize()
-      val inner: String = lookup(sym)
+      val name: Inner = lookup(ctx.symbol())
       val indices: List<Index> = ctx.index().map { representIndex(it) }
-      Ident.Indexed(inner, indices)
+      Representation.IndexedInner(name, indices)
     }
 
     else -> throw GrammarMatchException()
@@ -273,11 +275,8 @@ class Resolver(val st: ResolverState = ResolverState()) : SemGuSBaseVisitor<Reso
   override fun visitNumIndex(ctx: NumIndexContext): Single<Index.Num> =
     Single(Index.Num(ctx.Numeral().symbol.text.toInt()))
 
-  override fun visitSymbolIndex(ctx: SymbolIndexContext): Single<Index.Inner> = let {
-    val sym: String = ctx.symbol().normalize()
-    val inner: String = st.symMan.curScope.lookupIndex(sym)
-    Single(Index.Inner(inner))
-  }
+  override fun visitSymbolIndex(ctx: SymbolIndexContext): Single<Index.Str> =
+    Single(Index.Str(normalizeSymbol(ctx.symbol())))
 
   // lexemes
 
@@ -292,4 +291,29 @@ class Resolver(val st: ResolverState = ResolverState()) : SemGuSBaseVisitor<Reso
     }
     Single(mesSpecConst)
   }
+
+  /**
+   * Normalizes a symbol, removing sticks that surrounds the quoted symbol.
+   *
+   * NOTE: a quoted symbol can contain whitespace characters, including newlines.
+   */
+  private fun normalizeSymbol(ctx: SymbolContext): String = ctx.childTerminalNode(0).let { sym ->
+    when (sym.symbol.type) {
+      SimpleSymbol -> sym.text
+      QuotedSymbol -> sym.text.substring(1, sym.text.length - 1)
+      else -> throw GrammarMatchException()
+    }
+  }
+
+  private fun insertFunSymbol(ctx: SymbolContext, scope: Scope = st.symMan.curScope): Inner =
+    scope.insert("fun", normalizeSymbol(ctx))
+
+  private fun insertSortSymbol(ctx: SymbolContext, scope: Scope = st.symMan.curScope): Inner =
+    scope.insert("sort", normalizeSymbol(ctx))
+
+  private fun lookupFunSymbol(ctx: SymbolContext, scope: Scope = st.symMan.curScope): Inner =
+    scope.lookup("fun", normalizeSymbol(ctx))
+
+  private fun lookupSortSymbol(ctx: SymbolContext, scope: Scope = st.symMan.curScope): Inner =
+    scope.lookup("sort", normalizeSymbol(ctx))
 }

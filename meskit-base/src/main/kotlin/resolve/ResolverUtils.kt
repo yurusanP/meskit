@@ -2,10 +2,11 @@ package org.yurusanp.meskit.resolve
 
 import org.antlr.v4.runtime.ParserRuleContext
 import org.antlr.v4.runtime.tree.TerminalNode
-import org.yurusanp.meskit.parser.SemGuSParser.*
+import org.yurusanp.meskit.prelude.loadTheories
+import org.yurusanp.meskit.symtab.Scope
 import org.yurusanp.meskit.symtab.SymMan
 
-class ResolverState(val symMan: SymMan = SymMan()) {
+class ResolverState(val symMan: SymMan = SymMan(listOf("fun", "sort"), Scope::loadTheories)) {
   fun snapshot(): ResolverState = ResolverState(symMan.snapshot())
 
   // TODO: shall I also store type checking info here?
@@ -18,17 +19,6 @@ sealed interface ResolverResult {
 
 class GrammarMatchException : IllegalStateException("Unhandled grammar match")
 
-fun ParserRuleContext.childTerminalNode(i: Int) = (this.getChild(i) as TerminalNode)
+class ResolverCheckException(msg: String) : IllegalStateException(msg)
 
-/**
- * Normalizes a symbol, removing sticks that surrounds the quoted symbol.
- *
- * NOTE: a quoted symbol can contain whitespace characters, including newlines.
- */
-fun SymbolContext.normalize(): String = childTerminalNode(0).let {
-  when (it.symbol.type) {
-    SimpleSymbol -> it.text
-    QuotedSymbol -> it.text.substring(1, it.text.length - 1)
-    else -> throw GrammarMatchException()
-  }
-}
+fun ParserRuleContext.childTerminalNode(i: Int) = (this.getChild(i) as TerminalNode)

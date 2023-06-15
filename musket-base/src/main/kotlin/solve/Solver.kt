@@ -1,9 +1,12 @@
 package org.yurusanp.musket.solve
 
-import org.yurusanp.meskit.surface.Representation
 import org.yurusanp.meskit.parser.SemGuSBaseVisitor
 import org.yurusanp.meskit.parser.SemGuSParser.*
-import org.yurusanp.musket.translate.trans
+import org.yurusanp.meskit.surface.Def
+import org.yurusanp.meskit.surface.Representation
+import org.yurusanp.musket.syntax.Ann
+import org.yurusanp.musket.syntax.Node
+import org.yurusanp.musket.syntax.Stmt
 
 class Solver : SemGuSBaseVisitor<Unit>() {
   // stack of states
@@ -38,9 +41,29 @@ class Solver : SemGuSBaseVisitor<Unit>() {
   }
 
   override fun visitDeclareTermTypesCommand(ctx: DeclareTermTypesCommandContext) {
-    val mesTermTypeDefs: List<Representation.TermTypeDef> = st.resolver.visitDeclareTermTypesCommand(ctx).reps
-    st.adTypeDefs += mesTermTypeDefs.map(Representation.TermTypeDef::trans)
+    val mesTermTypeDefs: List<Def.SortFam> = st.resolver.visitDeclareTermTypesCommand(ctx).reps
+    st.adTypeDefs += mesTermTypeDefs.map(::transTermTypeDef)
   }
+
+  private fun transTermTypeDef(mesTermTypeDef: Def.SortFam): Stmt.ADTypeDef = Stmt.ADTypeDef(
+    Node.ADType(
+      mesTermTypeDef.name.value,
+      mesTermTypeDef.ctors.map(::transTermTypeCtor),
+      null,
+    ),
+  )
+
+  private fun transTermTypeCtor(mesCtor: Representation.Ctor): Node.Ctor = Node.Ctor(
+    mesCtor.name.value,
+    mesCtor.sels.map(::transTermTypeSel),
+  )
+
+  private fun transTermTypeSel(mesSel: Representation.SortedInner): Stmt.VarDec = Stmt.VarDec(
+    Node.AnnedSym(
+      Ann.DType(mesSel.sort.indexed.name.value),
+      mesSel.name.value,
+    ),
+  )
 
   // TODO: support functions that are not semantic relations
   override fun visitDefineFunsRecCommand(ctx: DefineFunsRecCommandContext) {

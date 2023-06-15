@@ -2,32 +2,36 @@ package org.yurusanp.meskit.symtab
 
 import java.util.concurrent.atomic.AtomicInteger
 
+// TODO: perhaps make the symbol manager more general?
+
 /**
  * A symbol manager used by all scopes.
  */
-class SymMan {
-  /**
-   * Current scope.
-   */
-  var curScope = Scope(null, this)
+class SymMan(val namespaces: List<String>, theoryLoader: Scope.() -> Unit = {}) {
+  // the symbol count shared by all scopes
+  private val genCnt = AtomicInteger(0)
 
   /**
    * Inverse mappings from inner names to surface symbols.
    */
-  val inverses: MutableMap<String, String> = mutableMapOf()
+  val inverses: MutableMap<Inner, String> = mutableMapOf()
+
+  /**
+   * Current scope.
+   */
+  // NOTE: goes after the above definitions to avoid initialization problem
+  var curScope: Scope = Scope(null, this).apply(theoryLoader)
 
   /**
    * For selector inner names, we also wish to store their corresponding constructor inner names.
    */
-  val selsToCtors: MutableMap<String, String> = mutableMapOf()
-
-  // the symbol count shared by all scopes
-  private val symCnt = AtomicInteger(0)
+  // TODO: shouldn't I move this into the analyzer?
+  // val selsToCtors: MutableMap<String, String> = mutableMapOf()
 
   /**
    * Generates a fresh inner name.
    */
-  fun genInner() = "MES__${symCnt.getAndIncrement()}"
+  fun genInner(): Inner = Inner("MES__${genCnt.getAndIncrement()}")
 
   /**
    * Changes to a new scope under the current scope.
@@ -48,11 +52,10 @@ class SymMan {
   /**
    * Takes a snapshot of the current symbol manager.
    */
-  fun snapshot(): SymMan = SymMan().also { newSymMan ->
+  fun snapshot(): SymMan = SymMan(namespaces).also { newSymMan ->
     val newCurScope = curScope.snapshot(newSymMan)
     newSymMan.curScope = newCurScope
     newSymMan.inverses.putAll(inverses)
-    newSymMan.selsToCtors.putAll(selsToCtors)
-    newSymMan.symCnt.set(symCnt.get())
+    newSymMan.genCnt.set(genCnt.get())
   }
 }
